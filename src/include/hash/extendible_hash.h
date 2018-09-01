@@ -13,6 +13,9 @@
 #include <vector>
 #include <string>
 
+// Below fix the error: ‘shared_ptr’ is not a member of ‘std’
+#include <memory> 
+
 #include "hash/hash_table.h"
 
 namespace cmudb {
@@ -33,7 +36,19 @@ public:
   bool Remove(const K &key) override;
   void Insert(const K &key, const V &value) override;
 
+  class Bucket {
+    public:
+    Bucket(int size) {}
+    bool isFull() { return (mCapacity == mLastStoredPos + 1); }
+
+    int mCapacity;
+    int mLastStoredPos;
+  };
+
 private:
   // add your own member variables here
+  int mDepth; // gloabl depth
+  std::vector<std::shared_ptr<Bucket>> mDirectory;
+
 };
 } // namespace cmudb

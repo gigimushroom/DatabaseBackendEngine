@@ -171,6 +171,8 @@ vector
 -
 string
 -
+memory
+-
 hash/hash_table.h
 ../src/include/hash/hash/hash_table.h
 
