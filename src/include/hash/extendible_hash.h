@@ -38,20 +38,33 @@ public:
 
   class Bucket {
     public:
-    Bucket(int size) {}
-    bool isFull() { return (mCapacity == mLastStoredPos + 1); }
+    Bucket(size_t size, int depth, int id) 
+    : mCapacity(size), mLocalDepth(depth), mId(id)
+    {
+      // Increase the capacity of the vector to a value that's greater or equal to new_cap. 
+      list.reserve(size);
+    }
 
-    int mCapacity; // fixed array size
-    int mLastStoredPos; // last occupied slot index, start from 0
+    bool isFull() { return (list.size() >= mCapacity); }
+
+    size_t mCapacity; // fixed array size
+    //int mLastStoredPos; // last occupied slot index, start from 0
     int mLocalDepth;
     int mId;
+    // std::array must be a compile-time constant. We use vector instead
+    std::vector<V> list;
   };
 
 private:
   // add your own member variables here
+  size_t GetBucketIndexFromHash(size_t hash);
+
+  // total num of bits needed to express the total num of buckets
   int mDepth; // gloabl depth
+
+  int mTotalBucketSize;  // should be 2^mDepth
   std::vector<std::shared_ptr<Bucket>> mDirectory;
-  
+
 
 };
 } // namespace cmudb
