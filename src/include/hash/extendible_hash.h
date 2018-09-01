@@ -41,14 +41,17 @@ public:
     Bucket(int size) {}
     bool isFull() { return (mCapacity == mLastStoredPos + 1); }
 
-    int mCapacity;
-    int mLastStoredPos;
+    int mCapacity; // fixed array size
+    int mLastStoredPos; // last occupied slot index, start from 0
+    int mLocalDepth;
+    int mId;
   };
 
 private:
   // add your own member variables here
   int mDepth; // gloabl depth
   std::vector<std::shared_ptr<Bucket>> mDirectory;
+  
 
 };
 } // namespace cmudb

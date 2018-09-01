@@ -2,8 +2,13 @@
 
 #include "hash/extendible_hash.h"
 #include "page/page.h"
+#include <bitset>
 
 namespace cmudb {
+
+// we use least significant bits in this impl
+// to get the right-most N bits
+// int n = original_value & ((1 << N) - 1);
 
 /*
  * constructor
@@ -17,7 +22,8 @@ ExtendibleHash<K, V>::ExtendibleHash(size_t size) {}
  */
 template <typename K, typename V>
 size_t ExtendibleHash<K, V>::HashKey(const K &key) {
-  return 0;
+  std::hash<K> key_hash;
+  return key_hash(key);
 }
 
 /*
@@ -26,7 +32,8 @@ size_t ExtendibleHash<K, V>::HashKey(const K &key) {
  */
 template <typename K, typename V>
 int ExtendibleHash<K, V>::GetGlobalDepth() const {
-  return 0;
+  // std::lock_guard<std::mutex> lock(mutex_);
+  return mDepth;
 }
 
 /*
@@ -35,7 +42,7 @@ int ExtendibleHash<K, V>::GetGlobalDepth() const {
  */
 template <typename K, typename V>
 int ExtendibleHash<K, V>::GetLocalDepth(int bucket_id) const {
-  return 0;
+  return mDirectory[bucket_id]->mLocalDepth;
 }
 
 /*
@@ -43,7 +50,7 @@ int ExtendibleHash<K, V>::GetLocalDepth(int bucket_id) const {
  */
 template <typename K, typename V>
 int ExtendibleHash<K, V>::GetNumBuckets() const {
-  return 0;
+  return mDirectory.size();
 }
 
 /*
