@@ -18,7 +18,7 @@ namespace cmudb {
  */
 template <typename K, typename V>
 ExtendibleHash<K, V>::ExtendibleHash(size_t size) 
-: mDepth(1), mTotalBucketSize(2) {
+: mDepth(1), mTotalBucketSize(2), mBucketCapacity(size) {
   
   std::shared_ptr<Bucket> b1(new Bucket(size, mDepth, 0));
   std::shared_ptr<Bucket> b2(new Bucket(size, mDepth, 1));
@@ -110,7 +110,38 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     LOG_INFO("insert to map. Bucket index:%lu, Position: %lu", index, bucket->list.size()-1);
     //std::cout<<"key:" << key << " value:" << value << " bucket index:" << index;
   } else {
-    LOG_INFO("too bad, bucket index:%lu is full", index);
+    if (bucket->mLocalDepth == mDepth)
+    {
+      LOG_INFO("too bad, bucket index:%lu is full. Need to resize directory and split buckets", index);
+      // resize directory vector
+      size_t preSize = mDirectory.size();
+      mDirectory.resize(preSize * 2);
+      mDepth++;
+
+      // fix new elements pointer
+      for (size_t i=preSize; i<mDirectory.capacity(); ++i) {
+        mDirectory[i] = mDirectory[i-preSize];
+      }
+    } else {
+      LOG_INFO("Bucket index:%lu is full. Need to split buckets only", index);
+    }
+
+    // add a new bucket
+    bucket->mLocalDepth++;
+    int newBucketId = bucket->mId+(mDirectory.size()/2);
+    int splitBucketId = bucket->mId;
+    LOG_INFO("Split bucket id: %d, new bucket id: %d", splitBucketId, newBucketId);
+    
+    // splict bucket
+
+
+    // fix new bucket pointer
+    //LOG_INFO("sharded ptr usage count: %lu", mDirectory[newBucketId].use_count());
+    mDirectory[newBucketId] = std::make_shared<Bucket>(mBucketCapacity, bucket->mLocalDepth, newBucketId);
+
+    // hack
+    mDirectory[newBucketId]->list.push_back(mDirectory[splitBucketId]->list.back());
+    mDirectory[splitBucketId]->list.pop_back();
   }
 
   // if full, split

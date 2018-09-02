@@ -63,6 +63,7 @@ private:
   int mDepth; // gloabl depth
 
   int mTotalBucketSize;  // should be 2^mDepth
+  int mBucketCapacity;
   std::vector<std::shared_ptr<Bucket>> mDirectory;
 
 
