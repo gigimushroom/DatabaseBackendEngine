@@ -100,6 +100,7 @@ src/CMakeFiles/vtable.dir/disk/disk_manager.cpp.o: ../src/include/disk/disk_mana
 src/CMakeFiles/vtable.dir/disk/disk_manager.cpp.o: ../src/disk/disk_manager.cpp
 
 src/CMakeFiles/vtable.dir/hash/extendible_hash.cpp.o: ../src/include/common/config.h
+src/CMakeFiles/vtable.dir/hash/extendible_hash.cpp.o: ../src/include/common/logger.h
 src/CMakeFiles/vtable.dir/hash/extendible_hash.cpp.o: ../src/include/common/rwmutex.h
 src/CMakeFiles/vtable.dir/hash/extendible_hash.cpp.o: ../src/include/hash/extendible_hash.h
 src/CMakeFiles/vtable.dir/hash/extendible_hash.cpp.o: ../src/include/hash/hash_table.h

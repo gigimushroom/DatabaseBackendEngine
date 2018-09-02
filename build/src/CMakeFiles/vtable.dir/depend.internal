@@ -101,6 +101,7 @@ src/CMakeFiles/vtable.dir/disk/disk_manager.cpp.o
  /home/mushroom/workspace/newDB/src/disk/disk_manager.cpp
 src/CMakeFiles/vtable.dir/hash/extendible_hash.cpp.o
  ../src/include/common/config.h
+ ../src/include/common/logger.h
  ../src/include/common/rwmutex.h
  ../src/include/hash/extendible_hash.h
  ../src/include/hash/hash_table.h

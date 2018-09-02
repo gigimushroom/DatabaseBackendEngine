@@ -52,7 +52,7 @@ public:
     int mLocalDepth;
     int mId;
     // std::array must be a compile-time constant. We use vector instead
-    std::vector<V> list;
+    std::vector<std::pair<K,V>> list;
   };
 
 private:

@@ -531,6 +531,8 @@ bitset
 -
 assert.h
 -
+common/logger.h
+/home/mushroom/workspace/newDB/src/hash/common/logger.h
 
 /home/mushroom/workspace/newDB/src/index/b_plus_tree.cpp
 iostream

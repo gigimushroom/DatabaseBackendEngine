@@ -4,6 +4,7 @@
 #include "page/page.h"
 #include <bitset>
 #include <assert.h>
+#include "common/logger.h"
 
 namespace cmudb {
 
@@ -57,6 +58,10 @@ int ExtendibleHash<K, V>::GetGlobalDepth() const {
 template <typename K, typename V>
 int ExtendibleHash<K, V>::GetLocalDepth(int bucket_id) const {
   // TODO: err handling
+  if (size_t(bucket_id) >= mDirectory.size()) {
+    return -1;
+  }
+
   return mDirectory[bucket_id]->mLocalDepth;
 }
 
@@ -101,7 +106,11 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
   
   // try to insert
   if (!bucket->isFull()) {
-
+    bucket->list.push_back(std::make_pair(key,value));
+    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu", index, bucket->list.size()-1);
+    //std::cout<<"key:" << key << " value:" << value << " bucket index:" << index;
+  } else {
+    LOG_INFO("too bad, bucket index:%lu is full", index);
   }
 
   // if full, split
