@@ -17,6 +17,7 @@
 // Below fix the error: ‘shared_ptr’ is not a member of ‘std’
 #include <memory> 
 
+#include <mutex>
 #include "hash/hash_table.h"
 
 namespace cmudb {
@@ -64,7 +65,6 @@ private:
   int mTotalBucketSize;  // should be 2^mDepth
   int mBucketCapacity;
   std::vector<std::shared_ptr<Bucket>> mDirectory;
-
-
+  mutable std::mutex mutex_;  
 };
 } // namespace cmudb

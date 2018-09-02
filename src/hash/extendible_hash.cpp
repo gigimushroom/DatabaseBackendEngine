@@ -47,7 +47,7 @@ size_t ExtendibleHash<K, V>::GetBucketIndexFromHash(size_t hash) {
  */
 template <typename K, typename V>
 int ExtendibleHash<K, V>::GetGlobalDepth() const {
-  // std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return mDepth;
 }
 
@@ -57,6 +57,7 @@ int ExtendibleHash<K, V>::GetGlobalDepth() const {
  */
 template <typename K, typename V>
 int ExtendibleHash<K, V>::GetLocalDepth(int bucket_id) const {
+  std::lock_guard<std::mutex> lock(mutex_);
   // TODO: err handling
   if (size_t(bucket_id) >= mDirectory.size()) {
     return -1;
@@ -70,6 +71,7 @@ int ExtendibleHash<K, V>::GetLocalDepth(int bucket_id) const {
  */
 template <typename K, typename V>
 int ExtendibleHash<K, V>::GetNumBuckets() const {
+  std::lock_guard<std::mutex> lock(mutex_);
   return mDirectory.size();
 }
 
@@ -78,6 +80,7 @@ int ExtendibleHash<K, V>::GetNumBuckets() const {
  */
 template <typename K, typename V>
 bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
+  std::lock_guard<std::mutex> lock(mutex_);
   size_t index = GetBucketIndexFromHash(HashKey(key));
   if (index >= mDirectory.size()) {
     return false;
@@ -96,6 +99,7 @@ bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
  */
 template <typename K, typename V>
 bool ExtendibleHash<K, V>::Remove(const K &key) {
+  std::lock_guard<std::mutex> lock(mutex_);
   size_t index = GetBucketIndexFromHash(HashKey(key));
   if (index >= mDirectory.size()) {
     return false;
@@ -115,6 +119,7 @@ bool ExtendibleHash<K, V>::Remove(const K &key) {
  */
 template <typename K, typename V>
 void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
+  std::lock_guard<std::mutex> lock(mutex_);
   // get hash of key, find bucket index
   size_t index = GetBucketIndexFromHash(HashKey(key));
 
@@ -125,7 +130,7 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
   // try to insert
   if (!bucket->isFull()) {
     bucket->dataMap[key] = value;
-    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu", index, bucket->dataMap.size()-1);
+    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu. Depth:%d", index, bucket->dataMap.size()-1, bucket->mLocalDepth);
     //std::cout<<"key:" << key << " value:" << value << " bucket index:" << index;
   } else {
     if (bucket->mLocalDepth == mDepth)
@@ -169,7 +174,7 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     index = GetBucketIndexFromHash(HashKey(key));
     auto curBucket = mDirectory[index];
     curBucket->dataMap[key] = value;
-    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu", index, curBucket->dataMap.size()-1);
+    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu. Depth:%d", index, curBucket->dataMap.size()-1, curBucket->mLocalDepth);
   }
 
   // if full, split
