@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <vector>
 #include <string>
+#include <map>
 
 // Below fix the error: ‘shared_ptr’ is not a member of ‘std’
 #include <memory> 
@@ -41,18 +42,16 @@ public:
     Bucket(size_t size, int depth, int id) 
     : mCapacity(size), mLocalDepth(depth), mId(id)
     {
-      // Increase the capacity of the vector to a value that's greater or equal to new_cap. 
-      list.reserve(size);
     }
 
-    bool isFull() { return (list.size() >= mCapacity); }
+    bool isFull() { return (dataMap.size() >= mCapacity); }
 
     size_t mCapacity; // fixed array size
-    //int mLastStoredPos; // last occupied slot index, start from 0
     int mLocalDepth;
     int mId;
     // std::array must be a compile-time constant. We use vector instead
-    std::vector<std::pair<K,V>> list;
+    //std::vector<std::pair<K,V>> list;
+    std::map<K,V> dataMap;
   };
 
 private:

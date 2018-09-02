@@ -78,6 +78,15 @@ int ExtendibleHash<K, V>::GetNumBuckets() const {
  */
 template <typename K, typename V>
 bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
+  size_t index = GetBucketIndexFromHash(HashKey(key));
+  if (index >= mDirectory.size()) {
+    return false;
+  }
+  auto search = mDirectory[index]->dataMap.find(key);
+  if (search != mDirectory[index]->dataMap.end()) {
+    value = search->second;
+    return true;
+  }
   return false;
 }
 
@@ -87,6 +96,15 @@ bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
  */
 template <typename K, typename V>
 bool ExtendibleHash<K, V>::Remove(const K &key) {
+  size_t index = GetBucketIndexFromHash(HashKey(key));
+  if (index >= mDirectory.size()) {
+    return false;
+  }
+  auto search = mDirectory[index]->dataMap.find(key);
+  if (search != mDirectory[index]->dataMap.end()) {
+    mDirectory[index]->dataMap.erase(key);
+    return true;
+  }
   return false;
 }
 
@@ -106,8 +124,8 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
   
   // try to insert
   if (!bucket->isFull()) {
-    bucket->list.push_back(std::make_pair(key,value));
-    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu", index, bucket->list.size()-1);
+    bucket->dataMap[key] = value;
+    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu", index, bucket->dataMap.size()-1);
     //std::cout<<"key:" << key << " value:" << value << " bucket index:" << index;
   } else {
     if (bucket->mLocalDepth == mDepth)
@@ -136,21 +154,22 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     //LOG_INFO("sharded ptr usage count: %lu", mDirectory[newBucketId].use_count());
     mDirectory[newBucketId] = std::make_shared<Bucket>(mBucketCapacity, bucket->mLocalDepth, newBucketId);
 
-
     // splict bucket
-    //mDirectory[newBucketId]->list.push_back(mDirectory[splitBucketId]->list.back());
-    //mDirectory[splitBucketId]->list.pop_back();
-
-    for (auto& pair:mDirectory[splitBucketId]->list) {
-      size_t newHash = GetBucketIndexFromHash(HashKey(pair.first));
-      if (newHash != mDirectory[splitBucketId]->mId) {
+    for (auto& kv : mDirectory[splitBucketId]->dataMap) {
+      size_t newHash = GetBucketIndexFromHash(HashKey(kv.first));
+      if (int(newHash) != mDirectory[splitBucketId]->mId) {
         LOG_INFO("!Current hash index: %d, new hash index: %lu", mDirectory[splitBucketId]->mId, newHash);
         // now we need to make a move from bucket A to bucket B
-
-      }
-      
+        mDirectory[newBucketId]->dataMap[kv.first] = kv.second;
+        mDirectory[splitBucketId]->dataMap.erase(kv.first);
+      }      
     }
 
+    // now add the k,v
+    index = GetBucketIndexFromHash(HashKey(key));
+    auto curBucket = mDirectory[index];
+    curBucket->dataMap[key] = value;
+    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu", index, curBucket->dataMap.size()-1);
   }
 
   // if full, split
