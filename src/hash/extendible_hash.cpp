@@ -132,16 +132,25 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     int splitBucketId = bucket->mId;
     LOG_INFO("Split bucket id: %d, new bucket id: %d", splitBucketId, newBucketId);
     
-    // splict bucket
-
-
     // fix new bucket pointer
     //LOG_INFO("sharded ptr usage count: %lu", mDirectory[newBucketId].use_count());
     mDirectory[newBucketId] = std::make_shared<Bucket>(mBucketCapacity, bucket->mLocalDepth, newBucketId);
 
-    // hack
-    mDirectory[newBucketId]->list.push_back(mDirectory[splitBucketId]->list.back());
-    mDirectory[splitBucketId]->list.pop_back();
+
+    // splict bucket
+    //mDirectory[newBucketId]->list.push_back(mDirectory[splitBucketId]->list.back());
+    //mDirectory[splitBucketId]->list.pop_back();
+
+    for (auto& pair:mDirectory[splitBucketId]->list) {
+      size_t newHash = GetBucketIndexFromHash(HashKey(pair.first));
+      if (newHash != mDirectory[splitBucketId]->mId) {
+        LOG_INFO("!Current hash index: %d, new hash index: %lu", mDirectory[splitBucketId]->mId, newHash);
+        // now we need to make a move from bucket A to bucket B
+
+      }
+      
+    }
+
   }
 
   // if full, split
