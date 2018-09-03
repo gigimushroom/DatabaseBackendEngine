@@ -174,14 +174,18 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     // now add the k,v
     index = GetBucketIndexFromHash(HashKey(key));
     auto curBucket = mDirectory[index];
-    curBucket->dataMap[key] = value;
+    if (!curBucket->isFull()) {
+      curBucket->dataMap[key] = value;
+    }
+    else {
+      LOG_INFO("WHAT??? FULL AGAIN????");
+      // TODO handling another split
+    }
+    
     LOG_INFO("insert to map. Bucket index:%lu, Position: %lu. Depth:%d", index, curBucket->dataMap.size()-1, curBucket->mLocalDepth);
   }
 
-  // if full, split
-
 }
-
 
 template class ExtendibleHash<page_id_t, Page *>;
 template class ExtendibleHash<Page *, std::list<Page *>::iterator>;
