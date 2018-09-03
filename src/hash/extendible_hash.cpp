@@ -130,7 +130,8 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
   // try to insert
   if (!bucket->isFull()) {
     bucket->dataMap[key] = value;
-    LOG_INFO("insert to map. Bucket index:%lu, Position: %lu. Depth:%d", index, bucket->dataMap.size()-1, bucket->mLocalDepth);
+    LOG_DEBUG("insert to map. Bucket index:%lu, Position: %lu. Depth:%d", 
+      index, bucket->dataMap.size()-1, bucket->mLocalDepth);
     //std::cout<<"key:" << key << " value:" << value << " bucket index:" << index;
   } else {
     if (bucket->mLocalDepth == mDepth)
@@ -153,7 +154,7 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     bucket->mLocalDepth++;
     int newBucketId = bucket->mId+(mDirectory.size()/2);
     int splitBucketId = bucket->mId;
-    LOG_INFO("Split bucket id: %d, new bucket id: %d", splitBucketId, newBucketId);
+    LOG_DEBUG("Split bucket id: %d, new bucket id: %d", splitBucketId, newBucketId);
     
     // fix new bucket pointer
     //LOG_INFO("sharded ptr usage count: %lu", mDirectory[newBucketId].use_count());

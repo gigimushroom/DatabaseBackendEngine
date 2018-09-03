@@ -9,6 +9,7 @@
 
 namespace cmudb {
 
+/*
 TEST(ExtendibleHashTest, SampleTest) {
   // set leaf size as 2
   ExtendibleHash<int, std::string> *test =
@@ -46,9 +47,48 @@ TEST(ExtendibleHashTest, SampleTest) {
   EXPECT_EQ(0, test->Remove(20));
 
   delete test;
+}*/
+
+// first split increase global depth from 0 to 3
+TEST(ExtendibleHashTest, BasicDepthTest) {
+  // set leaf size as 2
+  ExtendibleHash<int, std::string> *test =
+      new ExtendibleHash<int, std::string>(2);
+
+  // insert several key/value pairs
+  test->Insert(6, "a");   // b'0110
+  test->Insert(10, "b");  // b'1010
+  test->Insert(14, "c");  // b'1110
+
+  EXPECT_EQ(3, test->GetGlobalDepth());
+
+  EXPECT_EQ(3, test->GetLocalDepth(2));
+  EXPECT_EQ(3, test->GetLocalDepth(6));
+
+  EXPECT_EQ(-1, test->GetLocalDepth(0));
+  EXPECT_EQ(-1, test->GetLocalDepth(1));
+  EXPECT_EQ(-1, test->GetLocalDepth(3));
+  EXPECT_EQ(-1, test->GetLocalDepth(4));
+  EXPECT_EQ(-1, test->GetLocalDepth(5));
+  EXPECT_EQ(-1, test->GetLocalDepth(7));
+
+  // two buckets in use
+  EXPECT_EQ(2, test->GetNumBuckets());
+
+  // insert more key/value pairs
+  test->Insert(1, "d");
+  test->Insert(3, "e");
+  test->Insert(5, "f");
+
+  EXPECT_EQ(5, test->GetNumBuckets());
+  EXPECT_EQ(3, test->GetLocalDepth(1));
+  EXPECT_EQ(3, test->GetLocalDepth(3));
+  EXPECT_EQ(3, test->GetLocalDepth(5));
+
+  delete test;
 }
 
-
+/*
 TEST(ExtendibleHashTest, ConcurrentInsertTest) {
   const int num_runs = 50;
   const int num_threads = 3;
@@ -103,5 +143,5 @@ TEST(ExtendibleHashTest, ConcurrentRemoveTest) {
     EXPECT_EQ(1, test->Find(4, val));
   }
 }
-
+*/
 } // namespace cmudb
