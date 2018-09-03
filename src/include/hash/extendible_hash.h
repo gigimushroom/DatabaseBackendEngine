@@ -59,6 +59,8 @@ private:
   // add your own member variables here
   size_t GetBucketIndexFromHash(size_t hash);
 
+  void Split(size_t index, const K &key, const V &value);
+
   // total num of bits needed to express the total num of buckets
   int mDepth; // gloabl depth
 

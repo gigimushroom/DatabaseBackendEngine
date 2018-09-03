@@ -112,29 +112,10 @@ bool ExtendibleHash<K, V>::Remove(const K &key) {
   return false;
 }
 
-/*
- * insert <key,value> entry in hash table
- * Split & Redistribute bucket when there is overflow and if necessary increase
- * global depth
- */
 template <typename K, typename V>
-void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  // get hash of key, find bucket index
-  size_t index = GetBucketIndexFromHash(HashKey(key));
-
-  // lookup bucket
-  assert(mDirectory.size() - 1 >= index);
+void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
   auto bucket = mDirectory[index];
-  
-  // try to insert
-  if (!bucket->isFull()) {
-    bucket->dataMap[key] = value;
-    LOG_DEBUG("insert to map. Bucket index:%lu, Position: %lu. Depth:%d", 
-      index, bucket->dataMap.size()-1, bucket->mLocalDepth);
-    //std::cout<<"key:" << key << " value:" << value << " bucket index:" << index;
-  } else {
-    if (bucket->mLocalDepth == mDepth)
+  if (bucket->mLocalDepth == mDepth)
     {
       LOG_INFO("too bad, bucket index:%lu is full. Need to resize directory and split buckets", index);
       // resize directory vector
@@ -170,6 +151,31 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
         mDirectory[splitBucketId]->dataMap.erase(kv.first);
       }      
     }
+}
+
+/*
+ * insert <key,value> entry in hash table
+ * Split & Redistribute bucket when there is overflow and if necessary increase
+ * global depth
+ */
+template <typename K, typename V>
+void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  // get hash of key, find bucket index
+  size_t index = GetBucketIndexFromHash(HashKey(key));
+
+  // lookup bucket
+  assert(mDirectory.size() - 1 >= index);
+  auto bucket = mDirectory[index];
+  
+  // try to insert
+  if (!bucket->isFull()) {
+    bucket->dataMap[key] = value;
+    LOG_DEBUG("insert to map. Bucket index:%lu, Position: %lu. Depth:%d", 
+      index, bucket->dataMap.size()-1, bucket->mLocalDepth);
+    //std::cout<<"key:" << key << " value:" << value << " bucket index:" << index;
+  } else {
+    Split(index, key, value);    
 
     // now add the k,v
     index = GetBucketIndexFromHash(HashKey(key));
@@ -180,6 +186,8 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     else {
       LOG_INFO("WHAT??? FULL AGAIN????");
       // TODO handling another split
+
+      Split(index, key, value);  
     }
     
     LOG_INFO("insert to map. Bucket index:%lu, Position: %lu. Depth:%d", index, curBucket->dataMap.size()-1, curBucket->mLocalDepth);
