@@ -141,7 +141,7 @@ void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
     //LOG_INFO("sharded ptr usage count: %lu", mDirectory[newBucketId].use_count());
     mDirectory[newBucketId] = std::make_shared<Bucket>(mBucketCapacity, bucket->mLocalDepth, newBucketId);
 
-    // splict bucket
+    // split bucket
     for (auto& kv : mDirectory[splitBucketId]->dataMap) {
       size_t newHash = GetBucketIndexFromHash(HashKey(kv.first));
       if (int(newHash) != mDirectory[splitBucketId]->mId) {
