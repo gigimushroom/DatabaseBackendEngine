@@ -64,5 +64,8 @@ private:
   size_t mBucketDataSize;
   std::vector<std::shared_ptr<Bucket>> mDirectory;
   mutable std::mutex mutex_;  
+
+  void dump(const K &key);
+
 };
 } // namespace cmudb

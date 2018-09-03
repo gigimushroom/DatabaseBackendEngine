@@ -78,10 +78,14 @@ int ExtendibleHash<K, V>::GetNumBuckets() const {
   std::lock_guard<std::mutex> lock(mutex_);
 
   int count = 0;
+  int i = 0;
   for (auto b:mDirectory) {
     size_t numOfItems = b->dataMap.size();
-    if (numOfItems > 0)
+    // if actually owns the bucket (id matches its index), and contains at lease one item, count
+    if (numOfItems > 0 && b->mId == i) {
       count++;
+    }
+    i++;
   }
 
   return count;
@@ -95,8 +99,11 @@ bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
   std::lock_guard<std::mutex> lock(mutex_);
   size_t index = GetBucketIndexFromHash(HashKey(key));
   if (index >= GetDirCapacity()) {
+    LOG_INFO("index %lu beyond limit", index);
     return false;
   }
+
+  LOG_INFO("index %lu is finding", index);
   auto search = mDirectory[index]->dataMap.find(key);
   if (search != mDirectory[index]->dataMap.end()) {
     value = search->second;
@@ -129,7 +136,7 @@ void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
   auto bucket = mDirectory[index];
   if (bucket->mLocalDepth == mDepth)
   {
-    LOG_INFO("too bad, bucket index:%lu is full. Need to resize directory and split buckets", index);
+    LOG_INFO("too bad, bucket index:%d is full. Need to resize directory and split buckets", bucket->mId);
     // resize directory vector
     size_t preSize = GetDirCapacity();
     mDirectory.resize(preSize * 2);
@@ -140,7 +147,7 @@ void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
       mDirectory[i] = mDirectory[i-preSize];
     }
   } else {
-    LOG_INFO("Bucket index:%lu is full. Need to split buckets only", index);
+    LOG_INFO("Bucket index:%d is full. Need to split buckets only", bucket->mId);
   }
 
   // add a new bucket
@@ -158,9 +165,16 @@ void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
   for (auto& kv : mDirectory[splitBucketId]->dataMap) {
     size_t newHash = GetBucketIndexFromHash(HashKey(kv.first));
     if (int(newHash) != mDirectory[splitBucketId]->mId) {
-      LOG_INFO("!Current hash index: %d, new hash index: %lu", mDirectory[splitBucketId]->mId, newHash);
+      LOG_INFO("for key %d, Need to move from index: %d, to bucket index: %lu", kv.first, mDirectory[splitBucketId]->mId, newHash);
       // now we need to make a move from bucket A to bucket B
-      mDirectory[newBucketId]->dataMap[kv.first] = kv.second;
+      if (mDirectory[newHash]->mId != int(newHash)) {
+        // adjust old pointing bucket depth
+        mDirectory[newHash]->mLocalDepth++;
+        size_t cacheDepth = mDirectory[newHash]->mLocalDepth;
+        mDirectory[newHash] = std::make_shared<Bucket>(cacheDepth, newHash);
+      }
+
+      mDirectory[newHash]->dataMap[kv.first] = kv.second;
       mDirectory[splitBucketId]->dataMap.erase(kv.first);
     }      
   }
@@ -179,47 +193,43 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
 
   // lookup bucket
   assert(GetDirCapacity() - 1 >= index);
-  if (mDirectory[index] == nullptr) {
-    mDirectory[index] = std::make_shared<Bucket>(mDepth, index);
-    mBucketCount++;
-    LOG_DEBUG("Created new bucket index %lu", index);
-  }
-
   auto bucket = mDirectory[index];
-  
-  // try to insert
-  if (bucket->dataMap.size() < mBucketDataSize) {
-    bucket->dataMap[key] = value;
-    LOG_DEBUG("Inserted to map. Bucket index:%lu, Position: %lu. Depth:%d", 
-      index, bucket->dataMap.size()-1, bucket->mLocalDepth);
-    //std::cout<<"key:" << key << " value:" << value << " bucket index:" << index;
-  } else {
-    Split(index, key, value);    
 
-    // now add the k,v
+  while (bucket->dataMap.size() >= mBucketDataSize) {
+    Split(index, key, value);   
     index = GetBucketIndexFromHash(HashKey(key));
-    if (mDirectory[index] == nullptr) {
-      LOG_DEBUG("Inner: Created new bucket index %lu", index);
-      mDirectory[index] = std::make_shared<Bucket>(mDepth, index);
-      mBucketCount++;      
+    bucket = mDirectory[index];
+  }
+  bucket->dataMap[key] = value;
+  LOG_DEBUG("Inserted to map. Bucket index:%lu, Position: %lu. Depth:%d", 
+      index, bucket->dataMap.size()-1, bucket->mLocalDepth);
+
+  dump(key);
+}
+
+template <typename K, typename V> 
+void ExtendibleHash<K, V>::dump(const K &key) {
+  LOG_DEBUG("---------------------------------------------------------------");
+  LOG_DEBUG("Global depth: %d, key: %d (%#x)", mDepth, key, key);
+  int i = 0;
+  for (auto b: mDirectory) {
+    if (b != nullptr) {
+      LOG_DEBUG("bucket: %d (%d) -> %p, local depth: %d", i, b->mId, b.get(), b->mLocalDepth);
+      for (auto item: b->dataMap) {
+        LOG_DEBUG("key: %d", item.first);
+      }
+      LOG_DEBUG("\n");
+    } else {
+      LOG_DEBUG("bucket: %d -> nullptr ", i);
     }
-    auto curBucket = mDirectory[index];
-    if (curBucket->dataMap.size() < mBucketDataSize) {
-      curBucket->dataMap[key] = value;
-    }
-    else {
-      LOG_INFO("WHAT??? FULL AGAIN????");
-      // TODO handling another split
-      Split(index, key, value);  
-    }    
-    LOG_INFO("Inserted to map. Bucket index:%lu, Position: %lu. Depth:%d", index, curBucket->dataMap.size()-1, curBucket->mLocalDepth);
+    i++;
   }
 }
 
-template class ExtendibleHash<page_id_t, Page *>;
-template class ExtendibleHash<Page *, std::list<Page *>::iterator>;
+//template class ExtendibleHash<page_id_t, Page *>;
+//template class ExtendibleHash<Page *, std::list<Page *>::iterator>;
 // test purpose
 template class ExtendibleHash<int, std::string>;
-template class ExtendibleHash<int, std::list<int>::iterator>;
+//template class ExtendibleHash<int, std::list<int>::iterator>;
 template class ExtendibleHash<int, int>;
 } // namespace cmudb
