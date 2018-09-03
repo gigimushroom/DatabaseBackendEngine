@@ -178,6 +178,9 @@ void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
       mDirectory[splitBucketId]->dataMap.erase(kv.first);
     }      
   }
+
+  // NOTE: adjust depth again
+  mDirectory[newBucketId]->mLocalDepth = bucket->mLocalDepth;
 }
 
 /*
