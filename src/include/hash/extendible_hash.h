@@ -19,6 +19,7 @@
 
 #include <mutex>
 #include "hash/hash_table.h"
+#include <math.h>       /* pow */
 
 namespace cmudb {
 
@@ -38,20 +39,14 @@ public:
   bool Remove(const K &key) override;
   void Insert(const K &key, const V &value) override;
 
-  class Bucket {
-    public:
-    Bucket(size_t size, int depth, int id) 
-    : mCapacity(size), mLocalDepth(depth), mId(id)
-    {
-    }
-
-    bool isFull() { return (dataMap.size() >= mCapacity); }
-
-    size_t mCapacity; // fixed array size
-    int mLocalDepth;
-    int mId;
+  struct Bucket {
+    Bucket() = default;
+    Bucket(int depth, int id) 
+    : mLocalDepth(depth), mId(id)
+    {}
+    int mLocalDepth = 0;
+    int mId = 0;
     // std::array must be a compile-time constant. We use vector instead
-    //std::vector<std::pair<K,V>> list;
     std::map<K,V> dataMap;
   };
 
@@ -61,11 +56,12 @@ private:
 
   void Split(size_t index, const K &key, const V &value);
 
+  size_t GetDirCapacity() const { return pow(2, mDepth); }
   // total num of bits needed to express the total num of buckets
   int mDepth; // gloabl depth
 
-  int mTotalBucketSize;  // should be 2^mDepth
-  int mBucketCapacity;
+  int mBucketCount;
+  size_t mBucketDataSize;
   std::vector<std::shared_ptr<Bucket>> mDirectory;
   mutable std::mutex mutex_;  
 };

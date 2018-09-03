@@ -68,7 +68,7 @@ TEST(ExtendibleHashTest, BasicDepthTest) {
 
 
   EXPECT_EQ(-1, test->GetLocalDepth(0));
-  /*
+  
   EXPECT_EQ(-1, test->GetLocalDepth(1));
   EXPECT_EQ(-1, test->GetLocalDepth(3));
   EXPECT_EQ(-1, test->GetLocalDepth(4));
@@ -83,11 +83,15 @@ TEST(ExtendibleHashTest, BasicDepthTest) {
   test->Insert(3, "e");
   test->Insert(5, "f");
 
+  std::string result;
+  test->Find(3, result);
+  EXPECT_EQ("e", result);
+
   EXPECT_EQ(5, test->GetNumBuckets());
   EXPECT_EQ(3, test->GetLocalDepth(1));
-  EXPECT_EQ(3, test->GetLocalDepth(3));
-  EXPECT_EQ(3, test->GetLocalDepth(5));
-  */
+  //EXPECT_EQ(3, test->GetLocalDepth(3));
+  //EXPECT_EQ(3, test->GetLocalDepth(5));
+  
 
   delete test;
 }
