@@ -14,8 +14,8 @@ BufferPoolManager::BufferPoolManager(size_t pool_size,
       log_manager_(log_manager) {
   // a consecutive memory space for buffer pool
   pages_ = new Page[pool_size_];
-  //page_table_ = new ExtendibleHash<page_id_t, Page *>(BUCKET_SIZE); hahahahahahahahahhaahack
-  //replacer_ = new LRUReplacer<Page *>;
+  page_table_ = new ExtendibleHash<page_id_t, Page *>(BUCKET_SIZE); hahahahahahahahahhaahack
+  replacer_ = new LRUReplacer<Page *>;
   free_list_ = new std::list<Page *>;
 
   // put all the pages into free list
@@ -84,5 +84,23 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) { return false; }
  * update new page's metadata, zero out memory and add corresponding entry
  * into page table. return nullptr if all the pages in pool are pinned
  */
-Page *BufferPoolManager::NewPage(page_id_t &page_id) { return nullptr; }
+Page *BufferPoolManager::NewPage(page_id_t &page_id) { 
+  page_id_t pageId = disk_manager_->AllocatePage();
+  if (!free_list_->empty()) {
+    Page * freePage = free_list->front();
+    freePage->ResetMemory();
+    page_table_->insert(make_pair(pageId, freePage));
+    free_list->pop_front();
+    return freePage;
+  } else {
+    Page * victimPage = nullptr;
+    if (!replacer_->Victim(*victimPage)) {
+      return nullptr;
+    }
+    freePage->ResetMemory();
+    page_table_->insert(make_pair(pageId, victimPage));
+    return victimPage;
+  }
+}
+
 } // namespace cmudb

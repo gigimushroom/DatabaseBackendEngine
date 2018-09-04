@@ -25,7 +25,7 @@ template <typename T> void LRUReplacer<T>::Insert(const T &value) {
   itemList_.push_front(value);
   itemMap_.insert(make_pair(value, itemList_.begin()));
 
-  LOG_DEBUG("inserted value %d", value);
+  //LOG_DEBUG("inserted value %d", value);
 }
 
 /* If LRU is non-empty, pop the head member from LRU to argument "value", and
@@ -54,7 +54,7 @@ template <typename T> bool LRUReplacer<T>::Erase(const T &value) {
     itemList_.erase(search->second);
     itemMap_.erase(search);
 
-    LOG_DEBUG("removed value %d", value);
+    //LOG_DEBUG("removed value %d", value);
     return true;
   }
   return false;
