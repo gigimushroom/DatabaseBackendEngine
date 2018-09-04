@@ -26,6 +26,7 @@ src/CMakeFiles/vtable.dir/buffer/buffer_pool_manager.cpp.o: ../src/buffer/buffer
 src/CMakeFiles/vtable.dir/buffer/lru_replacer.cpp.o: ../src/include/buffer/lru_replacer.h
 src/CMakeFiles/vtable.dir/buffer/lru_replacer.cpp.o: ../src/include/buffer/replacer.h
 src/CMakeFiles/vtable.dir/buffer/lru_replacer.cpp.o: ../src/include/common/config.h
+src/CMakeFiles/vtable.dir/buffer/lru_replacer.cpp.o: ../src/include/common/logger.h
 src/CMakeFiles/vtable.dir/buffer/lru_replacer.cpp.o: ../src/include/common/rwmutex.h
 src/CMakeFiles/vtable.dir/buffer/lru_replacer.cpp.o: ../src/include/hash/extendible_hash.h
 src/CMakeFiles/vtable.dir/buffer/lru_replacer.cpp.o: ../src/include/hash/hash_table.h

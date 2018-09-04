@@ -11,6 +11,8 @@
 
 #include "buffer/replacer.h"
 #include "hash/extendible_hash.h"
+#include <list>
+#include <map>
 
 namespace cmudb {
 
@@ -31,6 +33,9 @@ public:
 
 private:
   // add your member variables here
+  std::list<T> itemList_; // front is most frequent useage, tail is least used
+  std::map<T, decltype(itemList_.begin())> itemMap_; // value store iterator pos of the key in list
+
 };
 
 } // namespace cmudb

@@ -27,6 +27,7 @@ src/CMakeFiles/vtable.dir/buffer/lru_replacer.cpp.o
  ../src/include/buffer/lru_replacer.h
  ../src/include/buffer/replacer.h
  ../src/include/common/config.h
+ ../src/include/common/logger.h
  ../src/include/common/rwmutex.h
  ../src/include/hash/extendible_hash.h
  ../src/include/hash/hash_table.h

@@ -15,7 +15,7 @@ BufferPoolManager::BufferPoolManager(size_t pool_size,
   // a consecutive memory space for buffer pool
   pages_ = new Page[pool_size_];
   //page_table_ = new ExtendibleHash<page_id_t, Page *>(BUCKET_SIZE); hahahahahahahahahhaahack
-  replacer_ = new LRUReplacer<Page *>;
+  //replacer_ = new LRUReplacer<Page *>;
   free_list_ = new std::list<Page *>;
 
   // put all the pages into free list

@@ -27,6 +27,10 @@ buffer/replacer.h
 ../src/include/buffer/buffer/replacer.h
 hash/extendible_hash.h
 ../src/include/buffer/hash/extendible_hash.h
+list
+-
+map
+-
 
 ../src/include/buffer/replacer.h
 cstdlib
@@ -477,6 +481,8 @@ buffer/lru_replacer.h
 /home/mushroom/workspace/newDB/src/buffer/buffer/lru_replacer.h
 page/page.h
 /home/mushroom/workspace/newDB/src/buffer/page/page.h
+common/logger.h
+/home/mushroom/workspace/newDB/src/buffer/common/logger.h
 
 /home/mushroom/workspace/newDB/src/catalog/column.cpp
 sstream
