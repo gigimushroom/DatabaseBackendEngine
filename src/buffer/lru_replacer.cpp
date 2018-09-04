@@ -15,6 +15,7 @@ template <typename T> LRUReplacer<T>::~LRUReplacer() {}
  * Insert value into LRU
  */
 template <typename T> void LRUReplacer<T>::Insert(const T &value) {
+  std::lock_guard<std::mutex> lock(mutex_);
   auto search = itemMap_.find(value);
   if (search != itemMap_.end()) {
     // find existing, remove it
@@ -31,6 +32,7 @@ template <typename T> void LRUReplacer<T>::Insert(const T &value) {
  * return true. If LRU is empty, return false
  */
 template <typename T> bool LRUReplacer<T>::Victim(T &value) {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (!itemList_.empty()) {
     value = itemList_.back();
     itemMap_.erase(value);
@@ -45,6 +47,7 @@ template <typename T> bool LRUReplacer<T>::Victim(T &value) {
  * return false
  */
 template <typename T> bool LRUReplacer<T>::Erase(const T &value) {
+  std::lock_guard<std::mutex> lock(mutex_);
   auto search = itemMap_.find(value);
   if (search != itemMap_.end()) {
     // we found it
@@ -57,7 +60,8 @@ template <typename T> bool LRUReplacer<T>::Erase(const T &value) {
   return false;
 }
 
-template <typename T> size_t LRUReplacer<T>::Size() { 
+template <typename T> size_t LRUReplacer<T>::Size() {
+  std::lock_guard<std::mutex> lock(mutex_);
   return itemMap_.size(); 
 }
 
