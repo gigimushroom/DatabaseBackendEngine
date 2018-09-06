@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/mushroom/workspace/newDB/src/sqlite/shell.c" "/home/mushroom/workspace/newDB/build/src/CMakeFiles/sqlite3_shell.dir/sqlite/shell.c.o"
+  "/home/mushroom/workspace/cmudb/src/sqlite/shell.c" "/home/mushroom/workspace/cmudb/build/src/CMakeFiles/sqlite3_shell.dir/sqlite/shell.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 
@@ -23,7 +23,7 @@ set(CMAKE_C_TARGET_INCLUDE_PATH
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/mushroom/workspace/newDB/build/src/CMakeFiles/sqlite3.dir/DependInfo.cmake"
+  "/home/mushroom/workspace/cmudb/build/src/CMakeFiles/sqlite3.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

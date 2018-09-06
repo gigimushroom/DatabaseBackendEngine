@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/mushroom/workspace/newDB
+CMAKE_SOURCE_DIR = /home/mushroom/workspace/cmudb
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/mushroom/workspace/newDB/build
+CMAKE_BINARY_DIR = /home/mushroom/workspace/cmudb/build
 
 # Utility rule file for ContinuousSubmit.
 
@@ -71,6 +71,6 @@ CMakeFiles/ContinuousSubmit.dir/clean:
 .PHONY : CMakeFiles/ContinuousSubmit.dir/clean
 
 CMakeFiles/ContinuousSubmit.dir/depend:
-	cd /home/mushroom/workspace/newDB/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/mushroom/workspace/newDB /home/mushroom/workspace/newDB /home/mushroom/workspace/newDB/build /home/mushroom/workspace/newDB/build /home/mushroom/workspace/newDB/build/CMakeFiles/ContinuousSubmit.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/mushroom/workspace/cmudb/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/mushroom/workspace/cmudb /home/mushroom/workspace/cmudb /home/mushroom/workspace/cmudb/build /home/mushroom/workspace/cmudb/build /home/mushroom/workspace/cmudb/build/CMakeFiles/ContinuousSubmit.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ContinuousSubmit.dir/depend
 

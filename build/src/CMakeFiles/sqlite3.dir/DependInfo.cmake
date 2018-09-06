@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/mushroom/workspace/newDB/src/sqlite/sqlite3.c" "/home/mushroom/workspace/newDB/build/src/CMakeFiles/sqlite3.dir/sqlite/sqlite3.c.o"
+  "/home/mushroom/workspace/cmudb/src/sqlite/sqlite3.c" "/home/mushroom/workspace/cmudb/build/src/CMakeFiles/sqlite3.dir/sqlite/sqlite3.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

@@ -6,9 +6,9 @@
 
 #IncludeRegexTransform: 
 
-/home/mushroom/workspace/newDB/third_party/gmock/gmock-gtest-all.cc
+/home/mushroom/workspace/cmudb/third_party/gmock/gmock-gtest-all.cc
 gtest/gtest.h
-/home/mushroom/workspace/newDB/third_party/gmock/gtest/gtest.h
+/home/mushroom/workspace/cmudb/third_party/gmock/gtest/gtest.h
 ctype.h
 -
 math.h
@@ -172,7 +172,7 @@ ostream
 string
 -
 gmock/gmock.h
-/home/mushroom/workspace/newDB/third_party/gmock/gmock/gmock.h
+/home/mushroom/workspace/cmudb/third_party/gmock/gmock/gmock.h
 limits.h
 -
 ostream
@@ -206,7 +206,7 @@ string
 unistd.h
 -
 
-/home/mushroom/workspace/newDB/third_party/gmock/gmock/gmock.h
+/home/mushroom/workspace/cmudb/third_party/gmock/gmock/gmock.h
 errno.h
 -
 algorithm
@@ -226,7 +226,7 @@ stdlib.h
 iostream
 -
 gtest/gtest.h
-/home/mushroom/workspace/newDB/third_party/gmock/gmock/gtest/gtest.h
+/home/mushroom/workspace/cmudb/third_party/gmock/gmock/gtest/gtest.h
 limits.h
 -
 ostream
@@ -274,17 +274,17 @@ vector
 algorithm
 -
 
-/home/mushroom/workspace/newDB/third_party/gmock/gmock_main.cc
+/home/mushroom/workspace/cmudb/third_party/gmock/gmock_main.cc
 iostream
 -
 gmock/gmock.h
-/home/mushroom/workspace/newDB/third_party/gmock/gmock/gmock.h
+/home/mushroom/workspace/cmudb/third_party/gmock/gmock/gmock.h
 gtest/gtest.h
-/home/mushroom/workspace/newDB/third_party/gmock/gtest/gtest.h
+/home/mushroom/workspace/cmudb/third_party/gmock/gtest/gtest.h
 tchar.h
 -
 
-/home/mushroom/workspace/newDB/third_party/gmock/gtest/gtest.h
+/home/mushroom/workspace/cmudb/third_party/gmock/gtest/gtest.h
 limits
 -
 ostream

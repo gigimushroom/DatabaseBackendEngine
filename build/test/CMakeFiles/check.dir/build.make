@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/mushroom/workspace/newDB
+CMAKE_SOURCE_DIR = /home/mushroom/workspace/cmudb
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/mushroom/workspace/newDB/build
+CMAKE_BINARY_DIR = /home/mushroom/workspace/cmudb/build
 
 # Utility rule file for check.
 
@@ -54,7 +54,7 @@ CMAKE_BINARY_DIR = /home/mushroom/workspace/newDB/build
 include test/CMakeFiles/check.dir/progress.make
 
 test/CMakeFiles/check:
-	cd /home/mushroom/workspace/newDB/build/test && /usr/bin/ctest --verbose
+	cd /home/mushroom/workspace/cmudb/build/test && /usr/bin/ctest --verbose
 
 check: test/CMakeFiles/check
 check: test/CMakeFiles/check.dir/build.make
@@ -67,10 +67,10 @@ test/CMakeFiles/check.dir/build: check
 .PHONY : test/CMakeFiles/check.dir/build
 
 test/CMakeFiles/check.dir/clean:
-	cd /home/mushroom/workspace/newDB/build/test && $(CMAKE_COMMAND) -P CMakeFiles/check.dir/cmake_clean.cmake
+	cd /home/mushroom/workspace/cmudb/build/test && $(CMAKE_COMMAND) -P CMakeFiles/check.dir/cmake_clean.cmake
 .PHONY : test/CMakeFiles/check.dir/clean
 
 test/CMakeFiles/check.dir/depend:
-	cd /home/mushroom/workspace/newDB/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/mushroom/workspace/newDB /home/mushroom/workspace/newDB/test /home/mushroom/workspace/newDB/build /home/mushroom/workspace/newDB/build/test /home/mushroom/workspace/newDB/build/test/CMakeFiles/check.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/mushroom/workspace/cmudb/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/mushroom/workspace/cmudb /home/mushroom/workspace/cmudb/test /home/mushroom/workspace/cmudb/build /home/mushroom/workspace/cmudb/build/test /home/mushroom/workspace/cmudb/build/test/CMakeFiles/check.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : test/CMakeFiles/check.dir/depend
 

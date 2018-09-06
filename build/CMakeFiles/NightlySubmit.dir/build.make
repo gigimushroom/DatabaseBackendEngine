@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/mushroom/workspace/newDB
+CMAKE_SOURCE_DIR = /home/mushroom/workspace/cmudb
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/mushroom/workspace/newDB/build
+CMAKE_BINARY_DIR = /home/mushroom/workspace/cmudb/build
 
 # Utility rule file for NightlySubmit.
 
@@ -71,6 +71,6 @@ CMakeFiles/NightlySubmit.dir/clean:
 .PHONY : CMakeFiles/NightlySubmit.dir/clean
 
 CMakeFiles/NightlySubmit.dir/depend:
-	cd /home/mushroom/workspace/newDB/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/mushroom/workspace/newDB /home/mushroom/workspace/newDB /home/mushroom/workspace/newDB/build /home/mushroom/workspace/newDB/build /home/mushroom/workspace/newDB/build/CMakeFiles/NightlySubmit.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/mushroom/workspace/cmudb/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/mushroom/workspace/cmudb /home/mushroom/workspace/cmudb /home/mushroom/workspace/cmudb/build /home/mushroom/workspace/cmudb/build /home/mushroom/workspace/cmudb/build/CMakeFiles/NightlySubmit.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/NightlySubmit.dir/depend
 

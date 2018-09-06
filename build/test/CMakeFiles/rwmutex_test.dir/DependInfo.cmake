@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/mushroom/workspace/newDB/test/common/rwmutex_test.cpp" "/home/mushroom/workspace/newDB/build/test/CMakeFiles/rwmutex_test.dir/common/rwmutex_test.cpp.o"
+  "/home/mushroom/workspace/cmudb/test/common/rwmutex_test.cpp" "/home/mushroom/workspace/cmudb/build/test/CMakeFiles/rwmutex_test.dir/common/rwmutex_test.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -19,9 +19,9 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/mushroom/workspace/newDB/build/src/CMakeFiles/vtable.dir/DependInfo.cmake"
-  "/home/mushroom/workspace/newDB/build/src/CMakeFiles/sqlite3.dir/DependInfo.cmake"
-  "/home/mushroom/workspace/newDB/build/test/CMakeFiles/gtest.dir/DependInfo.cmake"
+  "/home/mushroom/workspace/cmudb/build/src/CMakeFiles/vtable.dir/DependInfo.cmake"
+  "/home/mushroom/workspace/cmudb/build/src/CMakeFiles/sqlite3.dir/DependInfo.cmake"
+  "/home/mushroom/workspace/cmudb/build/test/CMakeFiles/gtest.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

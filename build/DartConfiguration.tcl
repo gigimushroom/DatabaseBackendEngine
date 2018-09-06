@@ -4,8 +4,8 @@
 
 
 # Configuration directories and files
-SourceDirectory: /home/mushroom/workspace/newDB
-BuildDirectory: /home/mushroom/workspace/newDB/build
+SourceDirectory: /home/mushroom/workspace/cmudb
+BuildDirectory: /home/mushroom/workspace/cmudb/build
 
 # Where to place the cost data store
 CostDataFile: 
@@ -33,7 +33,7 @@ ScpCommand: /usr/bin/scp
 NightlyStartTime: 00:00:00 EDT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "/usr/bin/cmake" "/home/mushroom/workspace/newDB"
+ConfigureCommand: "/usr/bin/cmake" "/home/mushroom/workspace/cmudb"
 MakeCommand: /usr/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}" -- -i
 DefaultCTestConfigurationType: Release
 

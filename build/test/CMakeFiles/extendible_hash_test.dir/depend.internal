@@ -5,4 +5,4 @@ test/CMakeFiles/extendible_hash_test.dir/hash/extendible_hash_test.cpp.o
  ../src/include/hash/extendible_hash.h
  ../src/include/hash/hash_table.h
  ../third_party/gmock/gtest/gtest.h
- /home/mushroom/workspace/newDB/test/hash/extendible_hash_test.cpp
+ /home/mushroom/workspace/cmudb/test/hash/extendible_hash_test.cpp

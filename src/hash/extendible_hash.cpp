@@ -165,7 +165,7 @@ void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
   for (auto& kv : mDirectory[splitBucketId]->dataMap) {
     size_t newHash = GetBucketIndexFromHash(HashKey(kv.first));
     if (int(newHash) != mDirectory[splitBucketId]->mId) {
-      LOG_INFO("for key %d, Need to move from index: %d, to bucket index: %lu", kv.first, mDirectory[splitBucketId]->mId, newHash);
+      //LOG_INFO("for key %d, Need to move from index: %d, to bucket index: %lu", kv.first, mDirectory[splitBucketId]->mId, newHash);
       // now we need to make a move from bucket A to bucket B
       if (mDirectory[newHash]->mId != int(newHash)) {
         // adjust old pointing bucket depth
@@ -212,7 +212,7 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
 
 template <typename K, typename V> 
 void ExtendibleHash<K, V>::dump(const K &key) {
-  LOG_DEBUG("---------------------------------------------------------------");
+  /*LOG_DEBUG("---------------------------------------------------------------");
   LOG_DEBUG("Global depth: %d, key: %d (%#x)", mDepth, key, key);
   int i = 0;
   for (auto b: mDirectory) {
@@ -226,13 +226,13 @@ void ExtendibleHash<K, V>::dump(const K &key) {
       LOG_DEBUG("bucket: %d -> nullptr ", i);
     }
     i++;
-  }
+  }*/
 }
 
-//template class ExtendibleHash<page_id_t, Page *>;
-//template class ExtendibleHash<Page *, std::list<Page *>::iterator>;
+template class ExtendibleHash<page_id_t, Page *>;
+template class ExtendibleHash<Page *, std::list<Page *>::iterator>;
 // test purpose
 template class ExtendibleHash<int, std::string>;
-//template class ExtendibleHash<int, std::list<int>::iterator>;
+template class ExtendibleHash<int, std::list<int>::iterator>;
 template class ExtendibleHash<int, int>;
 } // namespace cmudb

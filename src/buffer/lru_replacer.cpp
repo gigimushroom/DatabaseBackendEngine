@@ -65,7 +65,7 @@ template <typename T> size_t LRUReplacer<T>::Size() {
   return itemMap_.size(); 
 }
 
-//template class LRUReplacer<Page *>;
+template class LRUReplacer<Page *>;
 // test only
 template class LRUReplacer<int>;
 

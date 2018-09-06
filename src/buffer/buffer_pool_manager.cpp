@@ -14,7 +14,7 @@ BufferPoolManager::BufferPoolManager(size_t pool_size,
       log_manager_(log_manager) {
   // a consecutive memory space for buffer pool
   pages_ = new Page[pool_size_];
-  page_table_ = new ExtendibleHash<page_id_t, Page *>(BUCKET_SIZE); hahahahahahahahahhaahack
+  page_table_ = new ExtendibleHash<page_id_t, Page *>(BUCKET_SIZE);
   replacer_ = new LRUReplacer<Page *>;
   free_list_ = new std::list<Page *>;
 
@@ -87,18 +87,18 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) { return false; }
 Page *BufferPoolManager::NewPage(page_id_t &page_id) { 
   page_id_t pageId = disk_manager_->AllocatePage();
   if (!free_list_->empty()) {
-    Page * freePage = free_list->front();
+    Page * freePage = free_list_->front();
     freePage->ResetMemory();
-    page_table_->insert(make_pair(pageId, freePage));
-    free_list->pop_front();
+    page_table_->Insert(pageId, freePage);
+    free_list_->pop_front();
     return freePage;
   } else {
     Page * victimPage = nullptr;
-    if (!replacer_->Victim(*victimPage)) {
+    if (!replacer_->Victim(victimPage)) {
       return nullptr;
     }
-    freePage->ResetMemory();
-    page_table_->insert(make_pair(pageId, victimPage));
+    victimPage->ResetMemory();
+    page_table_->Insert(pageId, victimPage);
     return victimPage;
   }
 }

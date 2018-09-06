@@ -6,17 +6,17 @@
 
 #IncludeRegexTransform: 
 
-/home/mushroom/workspace/newDB/src/sqlite/sqlite3.c
+/home/mushroom/workspace/cmudb/src/sqlite/sqlite3.c
 config.h
-/home/mushroom/workspace/newDB/src/sqlite/config.h
+/home/mushroom/workspace/cmudb/src/sqlite/config.h
 vxWorks.h
 -
 pthread.h
 -
 mingw.h
-/home/mushroom/workspace/newDB/src/sqlite/mingw.h
+/home/mushroom/workspace/cmudb/src/sqlite/mingw.h
 _mingw.h
-/home/mushroom/workspace/newDB/src/sqlite/_mingw.h
+/home/mushroom/workspace/cmudb/src/sqlite/_mingw.h
 stdarg.h
 -
 stdint.h
@@ -54,7 +54,7 @@ malloc.h
 pthread.h
 -
 windows.h
-/home/mushroom/workspace/newDB/src/sqlite/windows.h
+/home/mushroom/workspace/cmudb/src/sqlite/windows.h
 sys/cygwin.h
 -
 errno.h
@@ -98,11 +98,11 @@ sys/statvfs.h
 dlfcn.h
 -
 sqlite_tcl.h
-/home/mushroom/workspace/newDB/src/sqlite/sqlite_tcl.h
+/home/mushroom/workspace/cmudb/src/sqlite/sqlite_tcl.h
 tcl.h
-/home/mushroom/workspace/newDB/src/sqlite/tcl.h
+/home/mushroom/workspace/cmudb/src/sqlite/tcl.h
 sqlite3rtree.h
-/home/mushroom/workspace/newDB/src/sqlite/sqlite3rtree.h
+/home/mushroom/workspace/cmudb/src/sqlite/sqlite3rtree.h
 unicode/utypes.h
 -
 unicode/uregex.h

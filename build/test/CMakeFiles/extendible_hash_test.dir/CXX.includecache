@@ -154,11 +154,11 @@ iosfwd
 vector
 -
 
-/home/mushroom/workspace/newDB/test/hash/extendible_hash_test.cpp
+/home/mushroom/workspace/cmudb/test/hash/extendible_hash_test.cpp
 thread
 -
 hash/extendible_hash.h
-/home/mushroom/workspace/newDB/test/hash/hash/extendible_hash.h
+/home/mushroom/workspace/cmudb/test/hash/hash/extendible_hash.h
 gtest/gtest.h
-/home/mushroom/workspace/newDB/test/hash/gtest/gtest.h
+/home/mushroom/workspace/cmudb/test/hash/gtest/gtest.h
 
