@@ -46,7 +46,36 @@ BufferPoolManager::~BufferPoolManager() {
  * 4. Update page metadata, read page content from disk file and return page
  * pointer
  */
-Page *BufferPoolManager::FetchPage(page_id_t page_id) { return nullptr; }
+Page *BufferPoolManager::FetchPage(page_id_t page_id) {
+  Page * page = nullptr;
+  if (page_table_->Find(page_id, page)) {
+    page->pin_count_++;
+    return page;
+  } else {
+    if (!free_list_->empty()) {
+      page = free_list_->front();
+      page->ResetMemory();
+      free_list_->pop_front();
+    } else {
+      if (!replacer_->Victim(page)) {
+        return nullptr;
+      }
+      page->ResetMemory();
+    }
+  }
+
+  if (page != nullptr) {
+    if (page->is_dirty_) {
+      // write back to disk
+      disk_manager_->WritePage(page_id, page->GetData());
+    }
+    page_table_->Insert(page_id, page);
+    disk_manager_->ReadPage(page_id, page->GetData());
+    return page;
+  }
+
+  return nullptr; 
+}
 
 /*
  * Implementation of unpin page
@@ -55,6 +84,21 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) { return nullptr; }
  * dirty flag of this page
  */
 bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
+  Page * page = nullptr;
+  if (page_table_->Find(page_id, page)) {
+    if (page->pin_count_ <= 0) {
+      return false;
+    }
+    page->pin_count_--;
+    if (page->pin_count_ == 0) {
+      replacer_->Insert(page);
+    }
+
+    if (is_dirty) {
+      page->is_dirty_ = true;
+    }
+    return true;
+  }
   return false;
 }
 
@@ -64,7 +108,14 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
  * if page is not found in page table, return false
  * NOTE: make sure page_id != INVALID_PAGE_ID
  */
-bool BufferPoolManager::FlushPage(page_id_t page_id) { return false; }
+bool BufferPoolManager::FlushPage(page_id_t page_id) { 
+  Page * page = nullptr;
+  if (page_id == INVALID_PAGE_ID || !page_table_->Find(page_id, page)) {
+    return false;
+  }
+  disk_manager_->WritePage(page_id, page->GetData());
+  return true; 
+}
 
 /**
  * User should call this method for deleting a page. This routine will call
@@ -74,7 +125,26 @@ bool BufferPoolManager::FlushPage(page_id_t page_id) { return false; }
  * call disk manager's DeallocatePage() method to delete from disk file. If
  * the page is found within page table, but pin_count != 0, return false
  */
-bool BufferPoolManager::DeletePage(page_id_t page_id) { return false; }
+bool BufferPoolManager::DeletePage(page_id_t page_id) { 
+  Page * page = nullptr;
+  if (page_id == INVALID_PAGE_ID || !page_table_->Find(page_id, page)) {
+    return false;
+  }
+
+  if (page->pin_count_ != 0) {
+    return false;
+  }
+
+  page->ResetMemory();
+  // add to free list, remove from lRU, and hashtable
+  free_list_->push_back(page);
+  replacer_->Erase(page);
+  page_table_->Remove(page_id);
+
+  disk_manager_->DeallocatePage(page_id);
+
+  return false; 
+}
 
 /**
  * User should call this method if needs to create a new page. This routine
