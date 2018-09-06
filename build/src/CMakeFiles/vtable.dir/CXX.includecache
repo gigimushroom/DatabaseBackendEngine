@@ -477,6 +477,8 @@ type/value.h
 /home/mushroom/workspace/cmudb/src/buffer/buffer_pool_manager.cpp
 buffer/buffer_pool_manager.h
 /home/mushroom/workspace/cmudb/src/buffer/buffer/buffer_pool_manager.h
+common/logger.h
+/home/mushroom/workspace/cmudb/src/buffer/common/logger.h
 
 /home/mushroom/workspace/cmudb/src/buffer/lru_replacer.cpp
 buffer/lru_replacer.h

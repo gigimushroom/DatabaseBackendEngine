@@ -8,6 +8,7 @@ test/CMakeFiles/buffer_pool_manager_test.dir/buffer/buffer_pool_manager_test.cpp
 test/CMakeFiles/buffer_pool_manager_test.dir/buffer/buffer_pool_manager_test.cpp.o: ../src/include/catalog/schema.h
 test/CMakeFiles/buffer_pool_manager_test.dir/buffer/buffer_pool_manager_test.cpp.o: ../src/include/common/config.h
 test/CMakeFiles/buffer_pool_manager_test.dir/buffer/buffer_pool_manager_test.cpp.o: ../src/include/common/exception.h
+test/CMakeFiles/buffer_pool_manager_test.dir/buffer/buffer_pool_manager_test.cpp.o: ../src/include/common/logger.h
 test/CMakeFiles/buffer_pool_manager_test.dir/buffer/buffer_pool_manager_test.cpp.o: ../src/include/common/rid.h
 test/CMakeFiles/buffer_pool_manager_test.dir/buffer/buffer_pool_manager_test.cpp.o: ../src/include/common/rwmutex.h
 test/CMakeFiles/buffer_pool_manager_test.dir/buffer/buffer_pool_manager_test.cpp.o: ../src/include/disk/disk_manager.h

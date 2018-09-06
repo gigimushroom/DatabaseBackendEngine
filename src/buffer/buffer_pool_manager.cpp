@@ -1,4 +1,5 @@
 #include "buffer/buffer_pool_manager.h"
+#include "common/logger.h"
 
 namespace cmudb {
 
@@ -50,26 +51,34 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
   Page * page = nullptr;
   if (page_table_->Find(page_id, page)) {
     page->pin_count_++;
+    LOG_INFO("FetchPage: page id %d still in hashtable, count: %d", page_id, page->pin_count_);
     return page;
   } else {
     if (!free_list_->empty()) {
       page = free_list_->front();
-      page->ResetMemory();
       free_list_->pop_front();
+      LOG_INFO("FetchPage: page id %d free list is not empty", page_id);
     } else {
       if (!replacer_->Victim(page)) {
         return nullptr;
       }
-      page->ResetMemory();
+      LOG_INFO("FetchPage: page id %d Victim", page->page_id_);
     }
   }
 
   if (page != nullptr) {
     if (page->is_dirty_) {
-      // write back to disk
-      disk_manager_->WritePage(page_id, page->GetData());
+      // write existing data back to disk
+      disk_manager_->WritePage(page->page_id_, page->GetData());
     }
+
+    page_table_->Remove(page->page_id_);
     page_table_->Insert(page_id, page);
+
+    page->pin_count_ = 1;
+    page->is_dirty_ = false;    
+    page->page_id_ = page_id;
+    LOG_INFO("FetchPage final: page id %d inserted, and pin count is %d", page_id, page->pin_count_);
     disk_manager_->ReadPage(page_id, page->GetData());
     return page;
   }
@@ -85,20 +94,23 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
  */
 bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
   Page * page = nullptr;
+  LOG_INFO("UnpinPage: page id %d needs unpin", page_id);
   if (page_table_->Find(page_id, page)) {
     if (page->pin_count_ <= 0) {
+      LOG_INFO("page id %d found, but pin count is 0", page_id);
       return false;
     }
     page->pin_count_--;
     if (page->pin_count_ == 0) {
       replacer_->Insert(page);
     }
-
+    LOG_INFO("page id %d inserted to hashtable, pin count: %d", page_id, page->pin_count_);
     if (is_dirty) {
       page->is_dirty_ = true;
     }
     return true;
   }
+  LOG_INFO("page id %d not found", page_id);
   return false;
 }
 
@@ -137,11 +149,14 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
 
   page->ResetMemory();
   // add to free list, remove from lRU, and hashtable
-  free_list_->push_back(page);
+  
   replacer_->Erase(page);
   page_table_->Remove(page_id);
-
   disk_manager_->DeallocatePage(page_id);
+
+  page->page_id_ = INVALID_PAGE_ID;
+  page->is_dirty_ = false;
+  free_list_->push_back(page);
 
   return false; 
 }
@@ -154,23 +169,34 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
  * update new page's metadata, zero out memory and add corresponding entry
  * into page table. return nullptr if all the pages in pool are pinned
  */
-Page *BufferPoolManager::NewPage(page_id_t &page_id) { 
-  page_id_t pageId = disk_manager_->AllocatePage();
+Page *BufferPoolManager::NewPage(page_id_t &page_id) {  
+  Page * res = nullptr;
   if (!free_list_->empty()) {
-    Page * freePage = free_list_->front();
-    freePage->ResetMemory();
-    page_table_->Insert(pageId, freePage);
+    res = free_list_->front();
     free_list_->pop_front();
-    return freePage;
+    LOG_INFO("page id %d is from free list", page_id);
   } else {
-    Page * victimPage = nullptr;
-    if (!replacer_->Victim(victimPage)) {
+    if (!replacer_->Victim(res)) {
       return nullptr;
     }
-    victimPage->ResetMemory();
-    page_table_->Insert(pageId, victimPage);
-    return victimPage;
+    LOG_INFO("page id %d is victim page, removed!", res->page_id_);
   }
+
+  page_id = disk_manager_->AllocatePage();
+  if (res->is_dirty_) {
+    disk_manager_->WritePage(res->page_id_, res->GetData());
+  }
+  
+  // remove old entry, add new entry
+  page_table_->Remove(res->page_id_);
+  page_table_->Insert(page_id, res);
+
+  res->ResetMemory();
+  res->pin_count_ = 1;
+  res->page_id_ = page_id;
+  res->is_dirty_ = false;
+  
+  return res;
 }
 
 } // namespace cmudb
