@@ -12,7 +12,9 @@ namespace cmudb {
  * set your own input parameters
  */
 INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE::IndexIterator() {}
+INDEXITERATOR_TYPE::IndexIterator(BPlusTreeLeafPage<KeyType, ValueType, KeyComparator> *leaf,
+              int index_, BufferPoolManager *buff_pool_manager):
+    leaf_(leaf), index_(index_), buff_pool_manager_(buff_pool_manager) {}
 
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE::~IndexIterator() {}

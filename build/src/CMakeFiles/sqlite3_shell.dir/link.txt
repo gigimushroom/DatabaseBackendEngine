@@ -1,1 +1,0 @@
-/usr/bin/cc     CMakeFiles/sqlite3_shell.dir/sqlite/shell.c.o  -o ../bin/sqlite3 -rdynamic ../lib/libsqlite3.so -lpthread -ldl -Wl,-rpath,/home/mushroom/workspace/cmudb/build/lib 
