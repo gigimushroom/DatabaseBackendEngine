@@ -104,7 +104,15 @@ B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key,
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(
     const ValueType &old_value, const KeyType &new_key,
-    const ValueType &new_value) {}
+    const ValueType &new_value) {
+  // must be a new page
+  assert(GetSize() == 1);
+  array[0].second = old_value;
+  array[1].first = new_key;
+  array[1].second = new_value;
+  IncreaseSizeByOne();
+}
+
 /*
  * Insert new_key & new_value pair right after the pair with its value ==
  * old_value
@@ -114,7 +122,12 @@ INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(
     const ValueType &old_value, const KeyType &new_key,
     const ValueType &new_value) {
-  return 0;
+  
+  int preIndex = ValueIndex(old_value);
+  array[preIndex].first = new_key;
+  array[preIndex].second = new_value;
+  IncreaseSizeByOne();
+  return GetSize();
 }
 
 /*****************************************************************************
