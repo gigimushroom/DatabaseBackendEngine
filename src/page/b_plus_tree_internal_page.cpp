@@ -85,6 +85,7 @@ B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key,
   // TODO: KeyComparator what does this do?
   for(int i=1; i < GetSize(); i++) {
     if (comparator(array[i].first,key))
+      LOG_INFO("INTERNAL_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
       return array[i].second;
   }
 
