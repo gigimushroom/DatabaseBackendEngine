@@ -51,18 +51,18 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
   Page * page = nullptr;
   if (page_table_->Find(page_id, page)) {
     page->pin_count_++;
-    LOG_INFO("FetchPage: page id %d still in hashtable, count: %d", page_id, page->pin_count_);
+    //LOG_INFO("FetchPage: page id %d still in hashtable, count: %d", page_id, page->pin_count_);
     return page;
   } else {
     if (!free_list_->empty()) {
       page = free_list_->front();
       free_list_->pop_front();
-      LOG_INFO("FetchPage: page id %d free list is not empty", page_id);
     } else {
+      // Every time we victim a page, we need to write to disk if dirty
+      // Then remove old entry from hashtable, and inser new entry
       if (!replacer_->Victim(page)) {
         return nullptr;
       }
-      LOG_INFO("FetchPage: page id %d Victim", page->page_id_);
     }
   }
 
@@ -78,7 +78,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
     page->pin_count_ = 1;
     page->is_dirty_ = false;    
     page->page_id_ = page_id;
-    LOG_INFO("FetchPage final: page id %d inserted, and pin count is %d", page_id, page->pin_count_);
+    //LOG_INFO("FetchPage final: page id %d inserted, and pin count is %d", page_id, page->pin_count_);
     disk_manager_->ReadPage(page_id, page->GetData());
     return page;
   }
@@ -94,10 +94,8 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
  */
 bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
   Page * page = nullptr;
-  LOG_INFO("UnpinPage: page id %d needs unpin", page_id);
   if (page_table_->Find(page_id, page)) {
     if (page->pin_count_ <= 0) {
-      LOG_INFO("page id %d found, but pin count is 0", page_id);
       return false;
     }
     page->pin_count_--;
@@ -110,7 +108,6 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
     }
     return true;
   }
-  LOG_INFO("page id %d not found", page_id);
   return false;
 }
 
@@ -174,7 +171,6 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
   if (!free_list_->empty()) {
     res = free_list_->front();
     free_list_->pop_front();
-    LOG_INFO("page id %d is from free list", page_id);
   } else {
     if (!replacer_->Victim(res)) {
       return nullptr;
