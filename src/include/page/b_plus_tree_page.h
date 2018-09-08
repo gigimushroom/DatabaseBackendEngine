@@ -57,8 +57,6 @@ public:
 
   void SetLSN(lsn_t lsn = INVALID_LSN);
 
-  void IncreaseSizeByOne() { size_++; }
-
 private:
   // member variable, attributes that both internal and leaf page share
   IndexPageType page_type_;

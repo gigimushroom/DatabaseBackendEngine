@@ -83,6 +83,7 @@ ValueType
 B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key,
                                        const KeyComparator &comparator) const {
   // TODO: KeyComparator what does this do?
+  // We can also use binary search
   for(int i=1; i < GetSize(); i++) {
     if (comparator(array[i].first,key))
       LOG_INFO("INTERNAL_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
@@ -110,7 +111,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(
   array[0].second = old_value;
   array[1].first = new_key;
   array[1].second = new_value;
-  IncreaseSizeByOne();
+  IncreaseSize(1);
 }
 
 /*
@@ -126,7 +127,7 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(
   int preIndex = ValueIndex(old_value);
   array[preIndex].first = new_key;
   array[preIndex].second = new_value;
-  IncreaseSizeByOne();
+  IncreaseSize(1);
   return GetSize();
 }
 
@@ -139,11 +140,32 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(
     BPlusTreeInternalPage *recipient,
-    BufferPoolManager *buffer_pool_manager) {}
+    BufferPoolManager *buffer_pool_manager) {
+  // remove from split index to the end
+  int splitIndex = GetSize()/2;
+  recipient->CopyHalfFrom(&array[splitIndex], GetSize() - splitIndex, buffer_pool_manager);
+
+  // we need to fix the removed nodes
+  // the children's parents are different now!
+  for (int i = splitIndex; i < GetSize(); i++) {
+    auto *page = buffer_pool_manager->FetchPage(ValueAt(i));
+    BPlusTreePage *node =
+        reinterpret_cast<BPlusTreePage *>(page->GetData());
+    node->SetParentPageId(recipient->GetPageId());
+    //buffer_pool_manager->UnpinPage(page->GetPageId());
+  }
+  IncreaseSize(-1 * (GetSize() - splitIndex));
+}
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyHalfFrom(
-    MappingType *items, int size, BufferPoolManager *buffer_pool_manager) {}
+    MappingType *items, int size, BufferPoolManager *buffer_pool_manager) {
+    // it is a new page
+    for (int i = 0; i < GetSize(); i++) {
+      array[i] = items[i];
+    }
+    IncreaseSize(size);
+}    
 
 /*****************************************************************************
  * REMOVE
@@ -154,7 +176,13 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyHalfFrom(
  * NOTE: store key&value pair continuously after deletion
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(int index) {}
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(int index) {
+  // Shuffle the data
+  for (int i = index; i < GetSize() - 1; ++i) {
+    array[i] = array[i+1];
+  }
+  IncreaseSize(-1);
+}
 
 /*
  * Remove the only key & value pair in internal page and return the value
@@ -162,7 +190,11 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(int index) {}
  */
 INDEX_TEMPLATE_ARGUMENTS
 ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::RemoveAndReturnOnlyChild() {
-  return INVALID_PAGE_ID;
+  assert(GetSize() == 2);
+  ValueType v = array[1].second;
+  array[1].second = INVALID_PAGE_ID;
+  IncreaseSize(-1);
+  return v;
 }
 /*****************************************************************************
  * MERGE
