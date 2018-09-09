@@ -231,6 +231,7 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key,
 
     int nextPageId = internalPage->Lookup(key, comparator_);
     rawPage = buffer_pool_manager_->FetchPage(nextPageId);
+    page = reinterpret_cast<BPlusTreePage *>(rawPage->GetData());
 
     // unpin previous page
     buffer_pool_manager_->UnpinPage(unPinPage, false);
