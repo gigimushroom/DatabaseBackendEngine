@@ -85,7 +85,7 @@ B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key,
   // TODO: KeyComparator what does this do?
   // We can also use binary search
   for(int i=1; i < GetSize(); i++) {
-    if (comparator(array[i].first,key))
+    if (comparator(array[i].first,key) >= 0)
       LOG_INFO("INTERNAL_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
       return array[i].second;
   }
@@ -152,7 +152,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(
     BPlusTreePage *node =
         reinterpret_cast<BPlusTreePage *>(page->GetData());
     node->SetParentPageId(recipient->GetPageId());
-    //buffer_pool_manager->UnpinPage(page->GetPageId());
+    buffer_pool_manager->UnpinPage(page->GetPageId(), true);
   }
   IncreaseSize(-1 * (GetSize() - splitIndex));
 }
@@ -231,6 +231,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(
     BPlusTreePage *node =
         reinterpret_cast<BPlusTreePage *>(page->GetData());
     node->SetParentPageId(recipient->GetPageId());
+    buffer_pool_manager->UnpinPage(page->GetPageId(), true);
   }
 
  }
@@ -264,6 +265,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(
   BPlusTreePage *node =
       reinterpret_cast<BPlusTreePage *>(page->GetData());
   node->SetParentPageId(recipient->GetPageId());
+  buffer_pool_manager->UnpinPage(page->GetPageId(), true);
 
   Remove(1);
 
@@ -275,6 +277,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(
   int ourPageIdInParentIndex = parentNode->ValueIndex(GetPageId());
   parentNode->SetKeyAt(ourPageIdInParentIndex, KeyAt(1)); // Our new first key. Copy up to parent
 
+  buffer_pool_manager->UnpinPage(pPage->GetPageId(), true);
   IncreaseSize(-1);
 }
 
@@ -301,6 +304,8 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
   BPlusTreePage *node =
       reinterpret_cast<BPlusTreePage *>(page->GetData());
   node->SetParentPageId(recipient->GetPageId());
+  
+  buffer_pool_manager->UnpinPage(page->GetPageId(), true);
 
   Remove(1);
 
@@ -312,6 +317,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
   //int ourPageIdInParentIndex = parentNode->ValueIndex(GetPageId());
   parentNode->SetKeyAt(parent_index, KeyAt(GetSize() - 1)); // Our new tail key. Copy up to parent
 
+  buffer_pool_manager->UnpinPage(pPage->GetPageId(), true);
   IncreaseSize(-1);
 }
 
