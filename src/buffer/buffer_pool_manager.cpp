@@ -155,7 +155,7 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
   page->is_dirty_ = false;
   free_list_->push_back(page);
 
-  return false; 
+  return true; 
 }
 
 /**

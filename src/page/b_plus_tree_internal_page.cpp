@@ -294,30 +294,32 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyLastFrom(
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
-    BPlusTreeInternalPage *recipient, int parent_index,
+    BPlusTreeInternalPage *recipient, int parent_index, // This 'parent_index' should be recipient's index?
     BufferPoolManager *buffer_pool_manager) {
 
-  recipient->CopyLastFrom(array[GetSize()], buffer_pool_manager);
+  MappingType pair = array[GetSize() - 1];
+  recipient->CopyLastFrom(pair, buffer_pool_manager);
 
-  // set the transfering node's child page's parent to recipient 
-  auto *page = buffer_pool_manager->FetchPage(array[GetSize()].second);
+  // Set the moved node's child to the correct parent
+  auto *page = buffer_pool_manager->FetchPage(pair.second);
   BPlusTreePage *node =
       reinterpret_cast<BPlusTreePage *>(page->GetData());
+  std::assert(node);
   node->SetParentPageId(recipient->GetPageId());
   
-  buffer_pool_manager->UnpinPage(page->GetPageId(), true);
-
-  Remove(1);
+  buffer_pool_manager->UnpinPage(page->GetPageId(), true); 
 
   auto *pPage = buffer_pool_manager->FetchPage(GetParentPageId());
   BPlusTreeInternalPage *parentNode =
         reinterpret_cast<BPlusTreeInternalPage *>(pPage->GetData());
 
-  // if parent's node key is our removed key, change the node key
-  //int ourPageIdInParentIndex = parentNode->ValueIndex(GetPageId());
-  parentNode->SetKeyAt(parent_index, KeyAt(GetSize() - 1)); // Our new tail key. Copy up to parent
+  // parent_index should recipient's position in parent node
+  // update the key content
+  parentNode->SetKeyAt(parent_index, pair.first); 
 
+  // now we do clean up, including remove the last node
   buffer_pool_manager->UnpinPage(pPage->GetPageId(), true);
+  Remove(GetSize() - 1); // remove last one
   IncreaseSize(-1);
 }
 
@@ -327,7 +329,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyFirstFrom(
     BufferPoolManager *buffer_pool_manager) {
   
   // move every item to the next, to give space to our new record
-  for (int i = 1; i < GetSize() - 1; ++i) {
+  for (int i = 1; i < GetSize(); ++i) {
     array[i + 1] = array[i];
   }
   array[1] = pair;
