@@ -152,16 +152,42 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
                                       BPlusTreePage *new_node,
                                       Transaction *transaction) {
   // find parent
+  // When the insertion cause overflow from leaf page all the way upto the root
+  // page, you should create a new root page and populate its elements.
+  page_id_t parentPageId = old_node->GetParentPageId();
+  if (parentPageId == INVALID_PAGE_ID) {
+    Page *newPage = buffer_pool_manager_->NewPage(parentPageId);
+    if (newPage == nullptr) {
+      throw std::bad_alloc();
+    }
+    auto ip = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(newPage->GetData());
+    ip->Init(parentPageId, INVALID_PAGE_ID);
+    root_page_id_ = parentPageId; // set root is the new created parent page
+    UpdateRootPageId(false);
 
-  // find old_node page id(position)
+    // assign old and new nodes parent
+    old_node->SetParentPageId(parentPageId);
+    new_node->SetParentPageId(parentPageId);
 
-  // call InsertNodeAfter() for new node
+    // Note: important APi to reset new root
+    ip->PopulateNewRoot(old_node->GetPageId(), key, new_node->GetPageId());
 
-  // if size overflow
+    buffer_pool_manager_->UnpinPage(parentPageId, true);
+  } else {
+    auto *pPage = buffer_pool_manager_->FetchPage(parentPageId);
+    auto parentNode =
+          reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(pPage->GetData());
 
-  // we need to split, then insertIntoParent()
+    // call InsertNodeAfter() for new node
+    int parentCurSize = parentNode->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());  
 
-
+    // if size overflow
+    if (parentCurSize > parentNode->GetMaxSize()) {
+      // we need to split, then insertIntoParent()
+      BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *newSiblingParentNode = Split(parentNode);
+      InsertIntoParent(parentNode, key, newSiblingParentNode, nullptr);
+    }
+  }
 }
 
 /*****************************************************************************
