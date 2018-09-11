@@ -82,7 +82,33 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {}
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
                                     Transaction *transaction) {
-  return false;
+  auto *leaf = FindLeafPage(key);
+  if (leaf == nullptr) {
+    return false;
+  }                         
+  ValueType v;
+  if (leaf->Lookup(key, v, comparator_)) {
+    return false; // return false if duplicate
+  }
+
+  auto originalSize = leaf->GetSize();
+  auto newSize = leaf->Insert(key, value, comparator_);
+
+  if (newSize > leaf->GetMaxSize()) {
+    // we need to split
+    B_PLUS_TREE_LEAF_PAGE_TYPE *newSiblingLeaf = Split(leaf);
+    InsertIntoParent(leaf, key, newSiblingLeaf, nullptr);
+
+    buffer_pool_manager_->UnpinPage(newSiblingLeaf->GetPageId(), true);
+  }
+
+  buffer_pool_manager_->UnpinPage(leaf->GetPageId(), true);
+
+  // checks
+  if (originalSize == newSize) {
+    LOG_INFO("InsertIntoLeaf original size equals to new size, insert failed");
+  }
+  return true;
 }
 
 /*
@@ -93,7 +119,23 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
  * of key & value pairs from input page to newly created page
  */
 INDEX_TEMPLATE_ARGUMENTS
-template <typename N> N *BPLUSTREE_TYPE::Split(N *node) { return nullptr; }
+template <typename N> N *BPLUSTREE_TYPE::Split(N *node) { 
+  page_id_t id = -1;
+  auto *page = buffer_pool_manager_->NewPage(id);
+  if (page == nullptr) {
+    LOG_INFO("Split failed due to buffer pool manager out of memory!");
+    throw std::bad_alloc();
+  }
+
+  auto *BTreePage =
+        reinterpret_cast<N *>(page->GetData());
+  // Init method after creating a new leaf page
+  BTreePage->Init(id, node->GetParentPageId());
+
+  node->MoveHalfTo(BTreePage, buffer_pool_manager_); 
+
+  return nullptr;
+}
 
 /*
  * Insert key & value pair into internal page after split
