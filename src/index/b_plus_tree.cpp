@@ -150,7 +150,19 @@ INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
                                       const KeyType &key,
                                       BPlusTreePage *new_node,
-                                      Transaction *transaction) {}
+                                      Transaction *transaction) {
+  // find parent
+
+  // find old_node page id(position)
+
+  // call InsertNodeAfter() for new node
+
+  // if size overflow
+
+  // we need to split, then insertIntoParent()
+
+
+}
 
 /*****************************************************************************
  * REMOVE
