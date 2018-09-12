@@ -452,7 +452,11 @@ bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
  * @return : index iterator
  */
 INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin() { return INDEXITERATOR_TYPE(); }
+INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin() {
+  auto *lp = FindLeafPage(key, true);
+
+  return INDEXITERATOR_TYPE(ip, 0), buffer_pool_manager_);
+}
 
 /*
  * Input parameter is low key, find the leaf page that contains the input key
@@ -461,7 +465,9 @@ INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin() { return INDEXITERATOR_TYPE(); }
  */
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
-  return INDEXITERATOR_TYPE();
+  auto *lp = FindLeafPage(key, false);
+
+  return INDEXITERATOR_TYPE(ip, leaf->KeyIndex(key), buffer_pool_manager_);
 }
 
 /*****************************************************************************
@@ -477,8 +483,9 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key,
   if (IsEmpty()) {
     return nullptr;
   }
-                                                         
-  auto *rawPage = buffer_pool_manager_->FetchPage(root_page_id_);
+
+  page_id_t page_id = root_page_id_;                                                       
+  auto *rawPage = buffer_pool_manager_->FetchPage(page_id);
   BPlusTreePage *page =
         reinterpret_cast<BPlusTreePage *>(rawPage->GetData());
 
@@ -488,13 +495,21 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key,
         reinterpret_cast<BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *>(rawPage->GetData());
     int unPinPage = internalPage->GetPageId();
 
-    int nextPageId = internalPage->Lookup(key, comparator_);
-    rawPage = buffer_pool_manager_->FetchPage(nextPageId);
+    // if leftMost flag == true, find the left most leaf page
+    if (leftMost) {
+      page_id = internalPage->ValueAt(1);
+    } else {
+      page_id = internalPage->Lookup(key, comparator_);
+    }
+    
+    rawPage = buffer_pool_manager_->FetchPage(page_id);
     page = reinterpret_cast<BPlusTreePage *>(rawPage->GetData());
 
     // unpin previous page
     buffer_pool_manager_->UnpinPage(unPinPage, false);
   }
+
+  buffer_pool_manager->UnpinPage(page_id, false);
 
   return reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page);;
 }
@@ -525,7 +540,47 @@ void BPLUSTREE_TYPE::UpdateRootPageId(int insert_record) {
  * print out whole b+tree sturcture, rank by rank
  */
 INDEX_TEMPLATE_ARGUMENTS
-std::string BPLUSTREE_TYPE::ToString(bool verbose) { return "Empty tree"; }
+std::string BPLUSTREE_TYPE::ToString(bool verbose) { 
+  /*
+  if (IsEmpty()) { return "Empty tree"; }
+
+  std::string result;
+  std::vector<page_id_t> v{root_page_id_};
+
+  std::string caution;
+  while (!v.empty()) {
+    std::vector<page_id_t> next;
+    for (auto page_id : v) {
+      result += "\n";
+      BPlusTreePage *item = GetPage(page_id);
+      if (item->IsLeafPage()) {
+        auto leaf = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(item);
+        result += leaf->ToString(verbose);
+      } else {
+        auto inner = reinterpret_cast<BPInternalPage *>(item);
+        result += inner->ToString(verbose);
+        for (int i = 0; i < inner->GetSize(); i++) {
+          page_id_t page = inner->ValueAt(i);
+          next.push_back((page));
+        }
+      }
+
+      int cnt = buffer_pool_manager_->FetchPage(page_id)->GetPinCount();
+      result += " ref: " + std::to_string(cnt);
+      buffer_pool_manager_->UnpinPage(item->GetPageId(), false);
+      if (cnt != 2) {
+        caution += std::to_string(page_id) + " cnt:" + std::to_string(cnt);
+      }
+
+      buffer_pool_manager_->UnpinPage(item->GetPageId(), false);
+    }
+    swap(v, next);
+  }
+  assert(caution.empty());
+  return result + caution;
+  */
+  return "Empty tree"; 
+}
 
 /*
  * This method is used for test only

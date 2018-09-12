@@ -27,7 +27,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(page_id_t page_id,
 
   // header size is 20 bytes, another 4 bytes for the 1st invalid k/v pair
   // Total record size divded by each record size is max allowed size
-  int size = (PAGE_SIZE - 20 - 4) / (sizeof(KeyType) + sizeof(ValueType));
+  int size = (PAGE_SIZE - 20 - 4) / (sizeof(KeyType) + sizeof(page_id_t));
   LOG_INFO("Max size of internal page is: %d", size);
   SetMaxSize(size);
 }
@@ -82,10 +82,9 @@ INDEX_TEMPLATE_ARGUMENTS
 ValueType
 B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key,
                                        const KeyComparator &comparator) const {
-  // TODO: KeyComparator what does this do?
-  // We can also use binary search
+  // TODO: Use binary search
   for(int i=1; i < GetSize(); i++) {
-    if (comparator(array[i].first,key) >= 0)
+    if (comparator(array[i].first,key) == 0)
       LOG_INFO("INTERNAL_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
       return array[i].second;
   }
@@ -233,7 +232,8 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(
     node->SetParentPageId(recipient->GetPageId());
     buffer_pool_manager->UnpinPage(page->GetPageId(), true);
   }
-
+  
+  SetSize(0); // we are empty
  }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -329,8 +329,9 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyFirstFrom(
     BufferPoolManager *buffer_pool_manager) {
   
   // move every item to the next, to give space to our new record
-  for (int i = 1; i < GetSize(); ++i) {
-    array[i + 1] = array[i];
+  // loop until i > 1, since the 1st node is invalid, 2nd is meaningful
+  for (int i = GetSize(); i > 1; i--) {
+    array[i] = array[i - 1];
   }
   array[1] = pair;
   IncreaseSize(1);
