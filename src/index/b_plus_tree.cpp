@@ -169,7 +169,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
     old_node->SetParentPageId(parentPageId);
     new_node->SetParentPageId(parentPageId);
 
-    // Note: important APi to reset new root
+    // Note: important APi for new root to add 2 nodes
     ip->PopulateNewRoot(old_node->GetPageId(), key, new_node->GetPageId());
 
     buffer_pool_manager_->UnpinPage(parentPageId, true);
@@ -201,7 +201,21 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
  * necessary.
  */
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {}
+void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
+  if (root_page_id_ == INVALID_PAGE_ID) {
+    return;
+  }
+
+  auto *leaf = FindLeafPage(key);
+  if (leaf == nullptr) {
+    return;
+  }
+
+  int totalSize = leaf->RemoveAndDeleteRecord(key, comparator_);     
+  if (totalSize < (leaf->GetMaxSize()/2)) {
+    CoalesceOrRedistribute(leaf, transaction);
+  }
+}
 
 /*
  * User needs to first find the sibling of input page. If sibling's size + input
@@ -213,7 +227,40 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {}
 INDEX_TEMPLATE_ARGUMENTS
 template <typename N>
 bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
-  return false;
+  auto *rawPage = buffer_pool_manager_->FetchPage(node->GetParentPageId());
+  auto pPage = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(rawPage->GetData());
+    
+  int index = pPage->ValueIndex(node->GetPageId());
+  KeyType k = pPage->KeyAt(index);
+
+  page_id_t v;
+
+ /* If index == 0, move sibling page's first key & value pair into end of input "node",
+ * otherwise move sibling page's last key & value pair into head of input
+ * "node"
+ * It means if sibling < k < node, then set index to 1
+ * if node < k < sibling, set index to 0
+ */
+  int redistributeIndex = index; 
+  // find out if we are on right side or not
+  if (comparator_(k, node->KeyAt(1)) < 0) {
+    v = pPage->ValueIndex(index - 1);    
+  } else {
+    v = pPage->ValueIndex(index +1);
+    redistributeIndex = 0;
+  }
+
+  auto *siblingRawPage = buffer_pool_manager_->FetchPage(v);
+  auto *sibling = reinterpret_cast<decltype(node)>(siblingRawPage->GetData());
+
+  bool result = false;
+  if (sibling->GetSize() + node->GetSize() > node->GetMaxSize()) {
+    Redistribute(sibling, node, redistributeIndex);
+  } else {
+    result = Coalesce(sibling, node, pPage, index, transaction);
+  }  
+
+  return result;
 }
 
 /*
@@ -234,7 +281,18 @@ bool BPLUSTREE_TYPE::Coalesce(
     N *&neighbor_node, N *&node,
     BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *&parent,
     int index, Transaction *transaction) {
-  return false;
+  // Move all the key & value pairs from one page to its sibling page
+  // We do this way due to we got the node index in parent side easily, so we could remove it
+  node->MoveAllTo(neighbor_node, index, buffer_pool_manager_);
+
+  bool result = buffer_pool_manager_->DeletePage(parent->GetPageId());
+  if (!result) {
+    LOG_INFO("BPLUSTREE_TYPE::Coalesce: Failed to delete page from buffer pool manager");
+  }
+  // Remove node from its parent
+  parent->Remove(index);
+  
+  return CoalesceOrRedistribute(parent, transaction);
 }
 
 /*
@@ -248,7 +306,14 @@ bool BPLUSTREE_TYPE::Coalesce(
  */
 INDEX_TEMPLATE_ARGUMENTS
 template <typename N>
-void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {}
+void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {
+  if (index == 0) {
+    neighbor_node->MoveFirstToEndOf(node, buffer_pool_manager_);
+  } else {
+    neighbor_node->MoveLastToFrontOf(node, index, buffer_pool_manager_);
+  }
+}
+
 /*
  * Update root page if necessary
  * NOTE: size of root page can be less than min size and this method is only
