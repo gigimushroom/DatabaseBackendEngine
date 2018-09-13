@@ -3,6 +3,7 @@
  */
 #include <iostream>
 #include <string>
+#include <assert.h>
 
 #include "common/exception.h"
 #include "common/logger.h"
@@ -220,7 +221,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
   // unpin if after done
   buffer_pool_manager_->UnpinPage(leaf->GetPageId(), true);
   if (shouldRemovePage) {
-    LOG_INFO("BPLUSTREE_TYPE::Remove: Leaf page from buffer pool should be already removed.")
+    LOG_INFO("BPLUSTREE_TYPE::Remove: Leaf page from buffer pool should be already removed.");
     //auto deletePage = buffer_pool_manager_->DeletePage(leaf->GetPageId());
     return;
   }
@@ -245,7 +246,7 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   page_id_t parentPageId = node->GetParentPageId();
   if (parentPageId == INVALID_PAGE_ID) {
     // we need to adjust root
-    std::assert(root_page_id_ == node->GetPageId());
+    assert(root_page_id_ == node->GetPageId());
     return AdjustRoot(node);
   }
   
@@ -254,7 +255,6 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   auto pPage = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(rawPage->GetData());
     
   int index = pPage->ValueIndex(node->GetPageId());
-  KeyType k = pPage->KeyAt(index);
 
   page_id_t v = INVALID_PAGE_ID;
   
@@ -267,7 +267,7 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     v = pPage->ValueIndex(index - 1);
     auto *siblingRawPage = buffer_pool_manager_->FetchPage(v);
     auto *sibling = reinterpret_cast<decltype(node)>(siblingRawPage->GetData());
-    std::assert(sibling);
+    assert(sibling);
     isLeftSibling = true;
 
     if (sibling->GetSize() + node->GetSize() > node->GetMaxSize()) {
@@ -295,7 +295,7 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
     buffer_pool_manager_->UnpinPage(v, false); 
   }
 
-  std::assert(isLeftSibling || isRightSibling);
+  assert(isLeftSibling || isRightSibling);
   
   // Prefer left sibling for merge
   if (isLeftSibling) {

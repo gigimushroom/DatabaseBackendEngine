@@ -304,7 +304,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
   auto *page = buffer_pool_manager->FetchPage(pair.second);
   BPlusTreePage *node =
       reinterpret_cast<BPlusTreePage *>(page->GetData());
-  std::assert(node);
+  assert(node);
   node->SetParentPageId(recipient->GetPageId());
   
   buffer_pool_manager->UnpinPage(page->GetPageId(), true); 
