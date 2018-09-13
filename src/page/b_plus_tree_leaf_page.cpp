@@ -141,7 +141,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyHalfFrom(MappingType *items, int size) {
   // it is a new page
-  for (int i = 0; i < GetSize(); i++) {
+  for (int i = 0; i < size; i++) {
     array[i] = items[i];
   }
   IncreaseSize(size);
@@ -324,7 +324,7 @@ std::string B_PLUS_TREE_LEAF_PAGE_TYPE::ToString(bool verbose) const {
     stream << "[pageId: " << GetPageId() << " parentId: " << GetParentPageId()
            << "]<" << GetSize() << "> ";
   }
-  int entry = 0;
+  int entry = 1;
   int end = GetSize();
   bool first = true;
 

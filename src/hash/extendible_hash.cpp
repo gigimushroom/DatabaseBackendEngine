@@ -62,7 +62,7 @@ int ExtendibleHash<K, V>::GetLocalDepth(int bucket_id) const {
 
   if (mDirectory[bucket_id] != nullptr) {
     size_t numOfItems = mDirectory[bucket_id]->dataMap.size();
-    LOG_INFO("num of items in bucket index %d is: %lu", bucket_id, numOfItems);
+    //LOG_INFO("num of items in bucket index %d is: %lu", bucket_id, numOfItems);
     if (numOfItems == 0)
       return -1; // for pass the test
     return mDirectory[bucket_id]->mLocalDepth;
@@ -99,11 +99,11 @@ bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
   std::lock_guard<std::mutex> lock(mutex_);
   size_t index = GetBucketIndexFromHash(HashKey(key));
   if (index >= GetDirCapacity()) {
-    LOG_INFO("index %lu beyond limit", index);
+    //LOG_INFO("index %lu beyond limit", index);
     return false;
   }
 
-  LOG_INFO("index %lu is finding", index);
+  //LOG_INFO("index %lu is finding", index);
   auto search = mDirectory[index]->dataMap.find(key);
   if (search != mDirectory[index]->dataMap.end()) {
     value = search->second;
@@ -136,7 +136,7 @@ void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
   auto bucket = mDirectory[index];
   if (bucket->mLocalDepth == mDepth)
   {
-    LOG_INFO("too bad, bucket index:%d is full. Need to resize directory and split buckets", bucket->mId);
+    //LOG_INFO("too bad, bucket index:%d is full. Need to resize directory and split buckets", bucket->mId);
     // resize directory vector
     size_t preSize = GetDirCapacity();
     mDirectory.resize(preSize * 2);
@@ -147,14 +147,14 @@ void ExtendibleHash<K, V>::Split(size_t index, const K &key, const V &value) {
       mDirectory[i] = mDirectory[i-preSize];
     }
   } else {
-    LOG_INFO("Bucket index:%d is full. Need to split buckets only", bucket->mId);
+    //LOG_INFO("Bucket index:%d is full. Need to split buckets only", bucket->mId);
   }
 
   // add a new bucket
   bucket->mLocalDepth++;
   int newBucketId = bucket->mId+(GetDirCapacity()/2); // hack
   int splitBucketId = bucket->mId;
-  LOG_DEBUG("Split bucket id: %d, new bucket id: %d", splitBucketId, newBucketId);
+  //LOG_DEBUG("Split bucket id: %d, new bucket id: %d", splitBucketId, newBucketId);
   
   // fix new bucket pointer
   //LOG_INFO("sharded ptr usage count: %lu", mDirectory[newBucketId].use_count());
@@ -204,8 +204,8 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     bucket = mDirectory[index];
   }
   bucket->dataMap[key] = value;
-  LOG_DEBUG("Inserted to map. Bucket index:%lu, Position: %lu. Depth:%d", 
-      index, bucket->dataMap.size()-1, bucket->mLocalDepth);
+  //LOG_DEBUG("Inserted to map. Bucket index:%lu, Position: %lu. Depth:%d", 
+  //    index, bucket->dataMap.size()-1, bucket->mLocalDepth);
 
   dump(key);
 }

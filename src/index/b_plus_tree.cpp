@@ -127,6 +127,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
 
   if (newSize > leaf->GetMaxSize()) {
     // we need to split
+    LOG_INFO("insert into leaf causing split");
     B_PLUS_TREE_LEAF_PAGE_TYPE *newSiblingLeaf = Split(leaf);
     InsertIntoParent(leaf, key, newSiblingLeaf, nullptr);
 
@@ -165,7 +166,7 @@ template <typename N> N *BPLUSTREE_TYPE::Split(N *node) {
 
   node->MoveHalfTo(BTreePage, buffer_pool_manager_); 
 
-  return nullptr;
+  return BTreePage;
 }
 
 /*
@@ -542,7 +543,7 @@ void BPLUSTREE_TYPE::UpdateRootPageId(int insert_record) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 std::string BPLUSTREE_TYPE::ToString(bool verbose) { 
-  /*
+  
   if (IsEmpty()) { return "Empty tree"; }
 
   std::string result;
@@ -553,12 +554,15 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
     std::vector<page_id_t> next;
     for (auto page_id : v) {
       result += "\n";
-      BPlusTreePage *item = GetPage(page_id);
+      auto *rawPage = buffer_pool_manager_->FetchPage(page_id);
+      BPlusTreePage *item =
+        reinterpret_cast<BPlusTreePage *>(rawPage->GetData());
+
       if (item->IsLeafPage()) {
         auto leaf = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(item);
         result += leaf->ToString(verbose);
       } else {
-        auto inner = reinterpret_cast<BPInternalPage *>(item);
+        auto inner = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(item);
         result += inner->ToString(verbose);
         for (int i = 0; i < inner->GetSize(); i++) {
           page_id_t page = inner->ValueAt(i);
@@ -577,10 +581,9 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
     }
     swap(v, next);
   }
-  assert(caution.empty());
+  //assert(caution.empty());
   return result + caution;
-  */
-  return "Empty tree"; 
+  
 }
 
 /*

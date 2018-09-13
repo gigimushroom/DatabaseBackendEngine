@@ -102,7 +102,7 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
     if (page->pin_count_ == 0) {
       replacer_->Insert(page);
     }
-    LOG_INFO("page id %d inserted to hashtable, pin count: %d", page_id, page->pin_count_);
+    //LOG_INFO("page id %d inserted to hashtable, pin count: %d", page_id, page->pin_count_);
     if (is_dirty) {
       page->is_dirty_ = true;
     }
@@ -175,7 +175,7 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
     if (!replacer_->Victim(res)) {
       return nullptr;
     }
-    LOG_INFO("page id %d is victim page, removed!", res->page_id_);
+    //LOG_INFO("page id %d is victim page, removed!", res->page_id_);
   }
 
   page_id = disk_manager_->AllocatePage();
