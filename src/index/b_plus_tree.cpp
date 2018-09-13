@@ -25,7 +25,8 @@ BPLUSTREE_TYPE::BPlusTree(const std::string &name,
  * Helper function to decide whether current b+tree is empty
  */
 INDEX_TEMPLATE_ARGUMENTS
-bool BPLUSTREE_TYPE::IsEmpty() const { return true; }
+bool BPLUSTREE_TYPE::IsEmpty() const { return (root_page_id_ == INVALID_PAGE_ID); }
+
 /*****************************************************************************
  * SEARCH
  *****************************************************************************/
@@ -38,7 +39,20 @@ INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::GetValue(const KeyType &key,
                               std::vector<ValueType> &result,
                               Transaction *transaction) {
-  return false;
+  
+  auto *leaf = FindLeafPage(key);
+  if (leaf == nullptr) {
+    return false;
+  }           
+
+  result.resize(1);              
+  ValueType v;
+  if (leaf->Lookup(key, result[0], comparator_)) {
+    return false; // return false if duplicate
+  }
+ 
+  buffer_pool_manager_->UnpinPage(leaf->GetPageId(), false);
+  return true;
 }
 
 /*****************************************************************************
@@ -70,7 +84,23 @@ bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value,
  * tree's root page id and insert entry directly into leaf page.
  */
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {}
+void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
+  LOG_INFO("Start new tree");
+  page_id_t id;
+  auto *page = buffer_pool_manager_->NewPage(id);
+  if (page == nullptr) {
+    LOG_INFO("StartNewTree failed due to buffer pool manager out of memory!");
+    throw std::bad_alloc();
+  }
+
+  root_page_id_ = id;
+  UpdateRootPageId(true);
+
+  auto *lp =
+        reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page->GetData());
+  lp->Init(id, INVALID_PAGE_ID);
+  lp->Insert(key, value, comparator_); 
+}
 
 /*
  * Insert constant key & value pair into leaf page
@@ -385,16 +415,19 @@ void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
   if (old_root_node->GetSize() == 2) {
-    // root only has one node which need to be deleted
+    // case 2
+    if (old_root_node->IsLeafPage()) {
+      // when you delete the last element in whole b+ tree
+      root_page_id_ = INVALID_PAGE_ID;
+      UpdateRootPageId(false);
+      return true;
+    }
+
+    // case 1
+    // root only has one child which need to be deleted
     // child is the new root
     auto root = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(old_root_node);
     page_id_t childPageId = root->ValueAt(1);
-
-    if (childPageId == INVALID_PAGE_ID) {
-      // when you delete the last element in whole b+ tree
-      root_page_id_ = INVALID_PAGE_ID;
-      return true;
-    }
 
     // set child page's parent to be invalid
     auto *rawPage = buffer_pool_manager_->FetchPage(childPageId);
