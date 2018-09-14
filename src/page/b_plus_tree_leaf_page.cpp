@@ -163,7 +163,7 @@ bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType &value,
   for(int i=1; i < GetSize(); i++) {
     int result = comparator(array[i].first,key);
     if (result == 0) {
-      LOG_INFO("B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
+      //LOG_INFO("B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
       value = array[i].second;
       return true;
     }

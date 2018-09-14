@@ -222,7 +222,9 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
     if (parentCurSize > parentNode->GetMaxSize()) {
       // we need to split, then insertIntoParent()
       BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *newSiblingParentNode = Split(parentNode);
-      InsertIntoParent(parentNode, key, newSiblingParentNode, nullptr);
+
+      KeyType newInsertedKey = newSiblingParentNode->KeyAt(1);
+      InsertIntoParent(parentNode, newInsertedKey, newSiblingParentNode, nullptr);
     }
   }
 }
@@ -571,7 +573,8 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
       } else {
         auto inner = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(item);
         result += inner->ToString(verbose);
-        for (int i = 0; i < inner->GetSize(); i++) {
+        // start from index 1
+        for (int i = 1; i < inner->GetSize(); i++) {
           page_id_t page = inner->ValueAt(i);
           next.push_back((page));
         }

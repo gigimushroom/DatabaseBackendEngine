@@ -162,8 +162,8 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyHalfFrom(
     MappingType *items, int size, BufferPoolManager *buffer_pool_manager) {
     // it is a new page
-    for (int i = 0; i < GetSize(); i++) {
-      array[i] = items[i];
+    for (int i = 0; i < size; i++) {
+      array[1 + i] = items[i];
     }
     IncreaseSize(size);
 }    
