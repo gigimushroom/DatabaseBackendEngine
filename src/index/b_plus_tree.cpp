@@ -573,10 +573,12 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
       } else {
         auto inner = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(item);
         result += inner->ToString(verbose);
-        // start from index 1
-        for (int i = 1; i < inner->GetSize(); i++) {
+        for (int i = 0; i < inner->GetSize(); i++) {
           page_id_t page = inner->ValueAt(i);
-          next.push_back((page));
+          // hack
+          if (page != 0) {
+            next.push_back((page));
+          }
         }
       }
 
