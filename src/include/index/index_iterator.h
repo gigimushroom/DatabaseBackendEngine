@@ -5,6 +5,7 @@
 #pragma once
 #include "page/b_plus_tree_leaf_page.h"
 #include "buffer/buffer_pool_manager.h"
+//#include "common/logger.h"
 
 namespace cmudb {
 
@@ -28,17 +29,17 @@ public:
   }
 
   IndexIterator &operator++() { 
-    index++;
+    index_++;
     // check if we need to switch to right sibling leaf node
-    if (index >= leafPage->GetSize()) {
-      page_id_t next = leafPage->GetNextPageId();
+    if (index_ >= leaf_->GetSize()) {
+      page_id_t next = leaf_->GetNextPageId();
       if (next == INVALID_PAGE_ID) {
-        LOG_INFO("No more sibling in indexItr");
+        //LOG_INFO("No more sibling in indexItr");
       } else {
-        index = 0;
-        bufferPoolManager.UnpinPage(leaf_->GetPageId(), false);
-        leafPage =
-            reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *> (bufferPoolManager.FetchPage(next)->GetData());
+        index_ = 0;
+        buff_pool_manager_->UnpinPage(leaf_->GetPageId(), false);
+        leaf_ =
+            reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *> (buff_pool_manager_->FetchPage(next)->GetData());
       }
     }
     return *this;

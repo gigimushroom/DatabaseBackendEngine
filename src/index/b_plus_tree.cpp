@@ -453,9 +453,10 @@ bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin() {
-  auto *lp = FindLeafPage(key, true);
+  KeyType dummyKey;
+  auto *lp = FindLeafPage(dummyKey, true);
 
-  return INDEXITERATOR_TYPE(ip, 0), buffer_pool_manager_);
+  return INDEXITERATOR_TYPE(lp, 0, buffer_pool_manager_);
 }
 
 /*
@@ -467,7 +468,7 @@ INDEX_TEMPLATE_ARGUMENTS
 INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
   auto *lp = FindLeafPage(key, false);
 
-  return INDEXITERATOR_TYPE(ip, leaf->KeyIndex(key), buffer_pool_manager_);
+  return INDEXITERATOR_TYPE(lp, lp->KeyIndex(key, comparator_), buffer_pool_manager_);
 }
 
 /*****************************************************************************
@@ -509,7 +510,7 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key,
     buffer_pool_manager_->UnpinPage(unPinPage, false);
   }
 
-  buffer_pool_manager->UnpinPage(page_id, false);
+  buffer_pool_manager_->UnpinPage(page_id, false);
 
   return reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page);;
 }

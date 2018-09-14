@@ -7,6 +7,8 @@
 #include "common/exception.h"
 #include "common/rid.h"
 #include "page/b_plus_tree_leaf_page.h"
+#include "common/logger.h"
+#include "page/b_plus_tree_internal_page.h"
 
 namespace cmudb {
 
@@ -79,7 +81,7 @@ KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const {
 INDEX_TEMPLATE_ARGUMENTS
 const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) {
   // replace with your own code
-  return array[index].second;
+  return array[index];
 }
 
 /*****************************************************************************
@@ -111,7 +113,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key,
   }
 
   IncreaseSize(1);
-  return GetSize()
+  return GetSize();
 }
 
 /*****************************************************************************
@@ -128,20 +130,10 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(
   int splitIndex = GetSize()/2;
   recipient->CopyHalfFrom(&array[splitIndex], GetSize() - splitIndex);
 
-  // we need to fix the removed nodes
-  // the children's parents are different now!
-  for (int i = splitIndex; i < GetSize(); i++) {
-    auto *page = buffer_pool_manager->FetchPage(ValueAt(i));
-    BPlusTreePage *node =
-        reinterpret_cast<BPlusTreePage *>(page->GetData());
-    node->SetParentPageId(recipient->GetPageId());
-    buffer_pool_manager->UnpinPage(page->GetPageId(), true);
-  }
-
   IncreaseSize(-1 * (GetSize() - splitIndex));
   // adjust next page id since recipient is a new page
-  recipient->SetNextPageId(node->GetNextPageId());
-  node->SetNextPageId(recipient->GetPageId());
+  recipient->SetNextPageId(GetNextPageId());
+  SetNextPageId(recipient->GetPageId());
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -200,8 +192,6 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(
     return 0; // Not found
   }
 
-  // perform delete since we found key
-  buffer_pool_manager->DeletePage(array[keyIndex].second);
   // shuffle to left by 1
   for (int i = keyIndex; i < GetSize() - 1; ++i) {
     array[i] = array[i+1];
@@ -220,24 +210,13 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient,
                                            int, BufferPoolManager *) {
-  // NOTE: This function assume current page is at the right hand of recipient                                           
-  // remove my Parent's memory of me
-  auto *pPage = buffer_pool_manager->FetchPage(GetParentPageId());
-  BPlusTreeInternalPage *parentNode =
-        reinterpret_cast<BPlusTreeInternalPage *>(pPage->GetData());
-  int myIndexInParentSide = parentNode->ValueIndex(GetPageId());
-  LOG_INFO("INTERNAL_PAGE_TYPE::MoveAllTo: Remove index %d from my parent node", myIndexInParentSide);
-  
-  parentNode->Remove(myIndexInParentSide);
+  // NOTE: This function assume current page is at the right hand of recipient
 
-  // unpin parent page
-  buffer_pool_manager->UnpinPage(parentNode->GetPageId(), true);
-
-  recipient->CopyAllFrom(&array[1], GetSize() - 1, buffer_pool_manager);
+  recipient->CopyAllFrom(&array[1], GetSize() - 1);
   // leaf has no children
   
   // assumption: current page is at the right hand of recipient
-  recipient->SetNextPageId(node->GetNextPageId());
+  recipient->SetNextPageId(GetNextPageId());
 
   SetSize(0); // we are empty
 }
@@ -263,15 +242,15 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(
     BPlusTreeLeafPage *recipient,
     BufferPoolManager *buffer_pool_manager) {
 
-  recipient->CopyLastFrom(array[1], buffer_pool_manager);
+  recipient->CopyLastFrom(array[1]);
   // remove index 1 node
   for (int i = 1; i < GetSize() - 1; ++i) {
     array[i] = array[i + 1];
   }
 
   auto *pPage = buffer_pool_manager->FetchPage(GetParentPageId());
-  BPlusTreeInternalPage *parentNode =
-        reinterpret_cast<BPlusTreeInternalPage *>(pPage->GetData());
+  auto *parentNode =
+        reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(pPage->GetData());
 
   // if parent's node key is our removed key, change the node key
   int ourPageIdInParentIndex = parentNode->ValueIndex(GetPageId());
@@ -283,7 +262,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyLastFrom(const MappingType &item) {
-  array[GetSize()] = pair;
+  array[GetSize()] = item;
   IncreaseSize(1);
 }
 
@@ -297,11 +276,11 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveLastToFrontOf(
     BufferPoolManager *buffer_pool_manager) {
 
   MappingType pair = array[GetSize() - 1];
-  recipient->CopyLastFrom(pair, buffer_pool_manager);
+  recipient->CopyFirstFrom(pair, parentIndex, buffer_pool_manager);
 
   auto *pPage = buffer_pool_manager->FetchPage(GetParentPageId());
-  BPlusTreeInternalPage *parentNode =
-        reinterpret_cast<BPlusTreeInternalPage *>(pPage->GetData());
+  auto *parentNode =
+        reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(pPage->GetData());
 
   // parentIndex should recipient's position in parent node
   // update the key content
@@ -324,8 +303,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyFirstFrom(
   for (int i = GetSize(); i > 1; i--) {
     array[i] = array[i - 1];
   }
-  array[1] = pair;
-  IncreaseSize(1)
+  array[1] = item;
+  IncreaseSize(1);
 }
 
 /*****************************************************************************
