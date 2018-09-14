@@ -172,7 +172,7 @@ TEST(BPlusTreeTests, InsertScale) {
   auto header_page = bpm->NewPage(page_id);
   (void) header_page;
 
-  int scale = 10;
+  int scale = 7;
   std::vector<int64_t> keys;
   for (int i = 0; i < scale; ++i) {
     keys.push_back(i + 1);
@@ -184,7 +184,8 @@ TEST(BPlusTreeTests, InsertScale) {
     index_key.SetFromInteger(key);
     tree.Insert(index_key, rid, transaction);
 
-    tree.ToString(false);
+    std::cout << "After insert " << key << " : "
+      << tree.ToString(false) << std::endl << std::endl;
   }
 
   //tree.ToString(false);

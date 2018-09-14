@@ -129,7 +129,13 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
     // we need to split
     LOG_INFO("insert into leaf causing split");
     B_PLUS_TREE_LEAF_PAGE_TYPE *newSiblingLeaf = Split(leaf);
-    InsertIntoParent(leaf, key, newSiblingLeaf, nullptr);
+
+    LOG_INFO("After split, old leaf is %s", leaf->ToString(false).c_str());
+
+    LOG_INFO("After split, splited leaf is %s", newSiblingLeaf->ToString(false).c_str());
+
+    KeyType keyInParent = newSiblingLeaf->GetItem(1).first;
+    InsertIntoParent(leaf, keyInParent, newSiblingLeaf, nullptr);
 
     buffer_pool_manager_->UnpinPage(newSiblingLeaf->GetPageId(), true);
   }
@@ -550,8 +556,10 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
   std::vector<page_id_t> v{root_page_id_};
 
   std::string caution;
+  int depth = 0;
   while (!v.empty()) {
     std::vector<page_id_t> next;
+    result += "\nNow visiting depth " + std::to_string(depth) + ": ";
     for (auto page_id : v) {
       result += "\n";
       auto *rawPage = buffer_pool_manager_->FetchPage(page_id);
@@ -580,6 +588,7 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
       buffer_pool_manager_->UnpinPage(item->GetPageId(), false);
     }
     swap(v, next);
+    depth++;
   }
   //assert(caution.empty());
   return result + caution;

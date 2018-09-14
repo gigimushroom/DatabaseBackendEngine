@@ -142,7 +142,8 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyHalfFrom(MappingType *items, int size) {
   // it is a new page
   for (int i = 0; i < size; i++) {
-    array[i] = items[i];
+    // array starts from index 1, since index 0 is always invalid
+    array[1 + i] = items[i];
   }
   IncreaseSize(size);
 }
