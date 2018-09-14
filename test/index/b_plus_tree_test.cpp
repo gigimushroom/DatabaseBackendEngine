@@ -15,7 +15,7 @@
 
 namespace cmudb {
 
-/*
+
 TEST(BPlusTreeTests, InsertTest1) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -149,7 +149,7 @@ TEST(BPlusTreeTests, InsertTest2) {
   remove("test.db");
   remove("test.log");
 }
-*/
+
 
 
 TEST(BPlusTreeTests, InsertScale) {

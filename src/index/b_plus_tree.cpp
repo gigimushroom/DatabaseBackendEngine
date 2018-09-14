@@ -48,11 +48,10 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key,
   result.resize(1);              
   ValueType v;
   if (leaf->Lookup(key, result[0], comparator_)) {
-    return false; // return false if duplicate
+    return true; // return false if duplicate
   }
  
-  buffer_pool_manager_->UnpinPage(leaf->GetPageId(), false);
-  return true;
+  return false;
 }
 
 /*****************************************************************************

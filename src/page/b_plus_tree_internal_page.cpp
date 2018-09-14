@@ -82,14 +82,16 @@ INDEX_TEMPLATE_ARGUMENTS
 ValueType
 B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key,
                                        const KeyComparator &comparator) const {
-  // TODO: Use binary search
-  for(int i=1; i < GetSize(); i++) {
-    if (comparator(array[i].first,key) == 0)
-      LOG_INFO("INTERNAL_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
-      return array[i].second;
+  // Use binary search
+  int foundIndex = 0;
+  int e = GetSize();
+  for (int b = 1; b < e; b++) {
+    if (comparator(array[b].first, key) <= 0) {
+      foundIndex = b;
+      break;
+    }
   }
-
-  return INVALID_PAGE_ID;
+  return array[foundIndex].second;
 }
 
 /*****************************************************************************
