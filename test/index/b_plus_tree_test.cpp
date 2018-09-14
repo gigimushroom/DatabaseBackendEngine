@@ -15,7 +15,7 @@
 
 namespace cmudb {
 
-
+/*
 TEST(BPlusTreeTests, InsertTest1) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -149,7 +149,7 @@ TEST(BPlusTreeTests, InsertTest2) {
   remove("test.db");
   remove("test.log");
 }
-
+*/
 
 
 TEST(BPlusTreeTests, InsertScale) {
@@ -172,7 +172,7 @@ TEST(BPlusTreeTests, InsertScale) {
   auto header_page = bpm->NewPage(page_id);
   (void) header_page;
 
-  int scale = 7;
+  int scale = 19;
   std::vector<int64_t> keys;
   for (int i = 0; i < scale; ++i) {
     keys.push_back(i + 1);

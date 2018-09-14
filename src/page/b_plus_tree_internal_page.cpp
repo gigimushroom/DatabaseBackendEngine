@@ -88,7 +88,6 @@ B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key,
   for (int b = 1; b < e; b++) {
     if (comparator(array[b].first, key) <= 0) {
       foundIndex = b;
-      break;
     }
   }
   return array[foundIndex].second;
@@ -126,8 +125,9 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(
     const ValueType &new_value) {
   
   int preIndex = ValueIndex(old_value);
-  array[preIndex].first = new_key;
-  array[preIndex].second = new_value;
+  // insert node after previous old node
+  array[preIndex + 1].first = new_key;
+  array[preIndex + 1].second = new_value;
   IncreaseSize(1);
   return GetSize();
 }
