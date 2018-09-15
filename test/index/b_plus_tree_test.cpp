@@ -75,7 +75,7 @@ TEST(BPlusTreeTests, InsertTest1) {
   remove("test.log");
 }
 
-/*
+
 TEST(BPlusTreeTests, InsertTest2) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -149,6 +149,7 @@ TEST(BPlusTreeTests, InsertTest2) {
   remove("test.log");
 }
 
+/*
 TEST(BPlusTreeTests, InsertScale) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -215,7 +216,9 @@ TEST(BPlusTreeTests, InsertScale) {
   remove("test.db");
   remove("test.log");
 }
+*/
 
+/*
 TEST(BPlusTreeTests, InsertRandom) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
