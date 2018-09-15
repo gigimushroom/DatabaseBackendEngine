@@ -22,7 +22,14 @@ public:
   IndexIterator() {}
   ~IndexIterator();
 
-  bool isEnd() { return (leaf_->GetNextPageId() == INVALID_PAGE_ID); }
+  bool isEnd() { 
+    // if we go BEYOND our leaf node, and our leaf node does not have next, 
+    // we are at the end
+    if (leaf_->GetNextPageId() == INVALID_PAGE_ID && index_ >= leaf_->GetSize()) {
+      return true;
+    }
+    return false; 
+  }
 
   const MappingType &operator*() {
     return leaf_->GetItem(index_);

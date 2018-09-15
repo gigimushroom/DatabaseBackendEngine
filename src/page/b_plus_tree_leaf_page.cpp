@@ -28,6 +28,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id) {
   SetPageId(page_id);
   SetParentPageId(parent_id);
 
+  SetNextPageId(INVALID_PAGE_ID);
+  
   // header size is 24 bytes, another 4 bytes for the 1st invalid k/v pair
   // Total record size divded by each record size is max allowed size
   int size = (PAGE_SIZE - 24 - 4) / (sizeof(KeyType) + sizeof(ValueType));
@@ -158,10 +160,12 @@ bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType &value,
                                         const KeyComparator &comparator) const {
   // TODO: Use binary search
   for(int i=1; i < GetSize(); i++) {
-    if (comparator(array[i].first,key) == 0)
+    int result = comparator(array[i].first,key);
+    if (result == 0) {
       LOG_INFO("B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
       value = array[i].second;
       return true;
+    }
   }                                          
   return false;
 }

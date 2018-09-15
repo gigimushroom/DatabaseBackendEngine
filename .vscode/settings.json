@@ -40,5 +40,7 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "list": "cpp"
-    }
+    },
+    "files.autoSave": "afterDelay",
+    "workbench.editor.enablePreview": false
 }
