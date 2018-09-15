@@ -577,10 +577,7 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
         result += inner->ToString(verbose);
         for (int i = 0; i < inner->GetSize(); i++) {
           page_id_t page = inner->ValueAt(i);
-          // hack
-          //if (page != 0) {
-            next.push_back((page));
-          //}
+          next.push_back((page));
         }
       }
 
