@@ -58,6 +58,8 @@ public:
   void QueueUpChildren(std::queue<BPlusTreePage *> *queue,
                        BufferPoolManager *buffer_pool_manager);
 
+  MappingType PushUpIndex();
+
 private:
   void CopyHalfFrom(MappingType *items, int size,
                     BufferPoolManager *buffer_pool_manager);

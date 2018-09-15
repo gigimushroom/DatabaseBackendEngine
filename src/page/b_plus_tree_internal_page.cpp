@@ -339,6 +339,16 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyFirstFrom(
   IncreaseSize(1);
 }
 
+INDEX_TEMPLATE_ARGUMENTS
+MappingType B_PLUS_TREE_INTERNAL_PAGE_TYPE::PushUpIndex() {
+  MappingType pair = array[1];
+  array[0].second = pair.second;
+
+  Remove(1);
+
+  return pair;
+}
+
 /*****************************************************************************
  * DEBUG
  *****************************************************************************/

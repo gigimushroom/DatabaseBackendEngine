@@ -223,8 +223,10 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
       // we need to split, then insertIntoParent()
       BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *newSiblingParentNode = Split(parentNode);
 
-      KeyType newInsertedKey = newSiblingParentNode->KeyAt(1);
-      InsertIntoParent(parentNode, newInsertedKey, newSiblingParentNode, nullptr);
+      // we need to push up the first pair from new splitted node
+      auto pair = newSiblingParentNode->PushUpIndex();      
+
+      InsertIntoParent(parentNode, pair.first, newSiblingParentNode, nullptr);
     }
   }
 }
@@ -576,9 +578,9 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
         for (int i = 0; i < inner->GetSize(); i++) {
           page_id_t page = inner->ValueAt(i);
           // hack
-          if (page != 0) {
+          //if (page != 0) {
             next.push_back((page));
-          }
+          //}
         }
       }
 
