@@ -126,12 +126,17 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
 
   if (newSize > leaf->GetMaxSize()) {
     // we need to split
+
+    std::cout << "CASE 0: "  << ToString(false) << std::endl << std::endl;
+
     LOG_INFO("insert into leaf causing split");
     B_PLUS_TREE_LEAF_PAGE_TYPE *newSiblingLeaf = Split(leaf);
 
-    LOG_INFO("After split, old leaf is %s", leaf->ToString(false).c_str());
+    LOG_INFO("After split, old leaf is %s, page id is: %s", leaf->ToString(false).c_str(), std::to_string(leaf->GetPageId()).c_str());
 
-    LOG_INFO("After split, splited leaf is %s", newSiblingLeaf->ToString(false).c_str());
+    LOG_INFO("After split, splited leaf is %s, page id is: %s", newSiblingLeaf->ToString(false).c_str(), std::to_string(newSiblingLeaf->GetPageId()).c_str());
+
+     std::cout << "CASE 1: "  << ToString(false) << std::endl << std::endl;
 
     KeyType keyInParent = newSiblingLeaf->GetItem(0).first;
     InsertIntoParent(leaf, keyInParent, newSiblingLeaf, nullptr);
@@ -167,10 +172,11 @@ template <typename N> N *BPLUSTREE_TYPE::Split(N *node) {
   auto *BTreePage =
         reinterpret_cast<N *>(page->GetData());
   // Init method after creating a new leaf page
+  std::cout << "before init: "  << ToString(false) << std::endl << std::endl;
   BTreePage->Init(id, node->GetParentPageId());
-
+std::cout << "after init 0: "  << ToString(false) << std::endl << std::endl;
   node->MoveHalfTo(BTreePage, buffer_pool_manager_); 
-
+std::cout << "after movehalfto: "  << ToString(false) << std::endl << std::endl;
   return BTreePage;
 }
 
@@ -193,6 +199,8 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
   // page, you should create a new root page and populate its elements.
   page_id_t parentPageId = old_node->GetParentPageId();
   if (parentPageId == INVALID_PAGE_ID) {
+    LOG_INFO("Insert into parent, old node is:/n%s", old_node->ToString().c_str());
+    LOG_INFO("Insert into parent, new node is:/n%s", new_node->ToString().c_str());
     Page *newPage = buffer_pool_manager_->NewPage(parentPageId);
     if (newPage == nullptr) {
       throw std::bad_alloc();
@@ -216,6 +224,9 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
           reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(pPage->GetData());
 
     // call InsertNodeAfter() for new node
+    LOG_INFO("else: Insert into parent, old node is:/n%s", old_node->ToString().c_str());
+    LOG_INFO("else: Insert into parent, new node is:/n%s", new_node->ToString().c_str());
+
     int parentCurSize = parentNode->InsertNodeAfter(old_node->GetPageId(), key, new_node->GetPageId());  
 
     // if size overflow
@@ -582,12 +593,12 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
         }
       }
 
-      int cnt = buffer_pool_manager_->FetchPage(page_id)->GetPinCount();
+      /*int cnt = buffer_pool_manager_->FetchPage(page_id)->GetPinCount();
       result += " ref: " + std::to_string(cnt);
       buffer_pool_manager_->UnpinPage(item->GetPageId(), false);
       if (cnt != 2) {
         caution += std::to_string(page_id) + " cnt:" + std::to_string(cnt);
-      }
+      }*/
 
       buffer_pool_manager_->UnpinPage(item->GetPageId(), false);
     }

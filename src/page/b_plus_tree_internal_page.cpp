@@ -373,7 +373,7 @@ std::string B_PLUS_TREE_INTERNAL_PAGE_TYPE::ToString(bool verbose) const {
     return "";
   }
   std::ostringstream os;
-  if (verbose) {
+  if (true) {
     os << "[pageId: " << GetPageId() << " parentId: " << GetParentPageId()
        << "]<" << GetSize() << "> ";
   }

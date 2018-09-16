@@ -175,22 +175,23 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
     if (!replacer_->Victim(res)) {
       return nullptr;
     }
-    //LOG_INFO("page id %d is victim page, removed!", res->page_id_);
+    assert(res->pin_count_ == 0);
+    LOG_INFO("page id %s is victim page, removed!", std::to_string(res->page_id_).c_str());
+    
+    if (res->is_dirty_) {
+      disk_manager_->WritePage(res->page_id_, res->GetData());
+      res->is_dirty_ = false;
+    }
+    page_table_->Remove(res->page_id_);
   }
 
-  page_id = disk_manager_->AllocatePage();
-  if (res->is_dirty_) {
-    disk_manager_->WritePage(res->page_id_, res->GetData());
-  }
-  
-  // remove old entry, add new entry
-  page_table_->Remove(res->page_id_);
+  page_id = disk_manager_->AllocatePage();  
   page_table_->Insert(page_id, res);
 
-  res->ResetMemory();
-  res->pin_count_ = 1;
+  res->ResetMemory();  
   res->page_id_ = page_id;
-  res->is_dirty_ = false;
+  res->is_dirty_ = true;
+  res->pin_count_ = 1;  
   
   return res;
 }

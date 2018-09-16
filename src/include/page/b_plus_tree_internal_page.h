@@ -54,7 +54,8 @@ public:
                          int parent_index,
                          BufferPoolManager *buffer_pool_manager);
   // DEUBG and PRINT
-  std::string ToString(bool verbose) const;
+  std::string ToString(bool verbose = false) const;
+
   void QueueUpChildren(std::queue<BPlusTreePage *> *queue,
                        BufferPoolManager *buffer_pool_manager);
 
