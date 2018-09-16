@@ -163,6 +163,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
 INDEX_TEMPLATE_ARGUMENTS
 template <typename N> N *BPLUSTREE_TYPE::Split(N *node) { 
   page_id_t id = -1;
+  std::cout << "before new page: "  << ToString(false) << std::endl << std::endl;
   auto *page = buffer_pool_manager_->NewPage(id);
   if (page == nullptr) {
     LOG_INFO("Split failed due to buffer pool manager out of memory!");

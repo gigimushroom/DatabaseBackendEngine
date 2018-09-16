@@ -50,6 +50,9 @@ BufferPoolManager::~BufferPoolManager() {
 Page *BufferPoolManager::FetchPage(page_id_t page_id) {
   Page * page = nullptr;
   if (page_table_->Find(page_id, page)) {
+    // Delete page in LRU replacer!
+    replacer_->Erase(page);
+    
     page->pin_count_++;
     //LOG_INFO("FetchPage: page id %d still in hashtable, count: %d", page_id, page->pin_count_);
     return page;
@@ -59,7 +62,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
       free_list_->pop_front();
     } else {
       // Every time we victim a page, we need to write to disk if dirty
-      // Then remove old entry from hashtable, and inser new entry
+      // Then remove old entry from hashtable, and insert new entry
       if (!replacer_->Victim(page)) {
         return nullptr;
       }
@@ -175,7 +178,7 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
     if (!replacer_->Victim(res)) {
       return nullptr;
     }
-    assert(res->pin_count_ == 0);
+    //assert(res->pin_count_ == 0);
     LOG_INFO("page id %s is victim page, removed!", std::to_string(res->page_id_).c_str());
     
     if (res->is_dirty_) {

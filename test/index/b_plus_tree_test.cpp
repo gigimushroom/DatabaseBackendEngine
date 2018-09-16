@@ -172,7 +172,7 @@ TEST(BPlusTreeTests, InsertScale) {
   auto header_page = bpm->NewPage(page_id);
   (void) header_page;
 
-  int scale = 123;
+  int scale = 126;
   std::vector<int64_t> keys;
   for (int i = 0; i < scale; ++i) {
     keys.push_back(i + 1);
