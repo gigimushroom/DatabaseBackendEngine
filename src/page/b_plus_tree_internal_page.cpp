@@ -143,7 +143,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(
     BPlusTreeInternalPage *recipient,
     BufferPoolManager *buffer_pool_manager) {
   // remove from split index to the end
-  int splitIndex = GetSize()/2;
+  int splitIndex = (GetSize() + 1) / 2;
   recipient->CopyHalfFrom(&array[splitIndex], GetSize() - splitIndex, buffer_pool_manager);
 
   // we need to fix the removed nodes

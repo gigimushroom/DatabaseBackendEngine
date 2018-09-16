@@ -24,15 +24,15 @@ namespace cmudb {
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id) {
   SetPageType(IndexPageType::LEAF_PAGE);
-  SetSize(1); // 1 for the first invalid key                            
+  SetSize(0);                            
   SetPageId(page_id);
   SetParentPageId(parent_id);
 
   SetNextPageId(INVALID_PAGE_ID);
   
-  // header size is 24 bytes, another 4 bytes for the 1st invalid k/v pair
+  // header size is 24 bytes
   // Total record size divded by each record size is max allowed size
-  int size = (PAGE_SIZE - 24 - 4) / (sizeof(KeyType) + sizeof(ValueType));
+  int size = (PAGE_SIZE - 24) / (sizeof(KeyType) + sizeof(ValueType));
   LOG_INFO("Max size of leaf page is: %d", size);
   SetMaxSize(size);
 }
@@ -57,7 +57,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(
     const KeyType &key, const KeyComparator &comparator) const {
-  for (int i = 1; i < GetSize(); ++i) {
+  for (int i = 0; i < GetSize(); ++i) {
     if (comparator(array[i].first, key) >= 0) {
       return i;
     }
@@ -129,7 +129,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(
     BPlusTreeLeafPage *recipient,
     __attribute__((unused)) BufferPoolManager *buffer_pool_manager) {
   // remove from split index to the end
-  int splitIndex = GetSize()/2;
+  int splitIndex = GetMaxSize() / 2;
   recipient->CopyHalfFrom(&array[splitIndex], GetSize() - splitIndex);
 
   IncreaseSize(-1 * (GetSize() - splitIndex));
@@ -142,8 +142,8 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyHalfFrom(MappingType *items, int size) {
   // it is a new page
   for (int i = 0; i < size; i++) {
-    // array starts from index 1, since index 0 is always invalid
-    array[1 + i] = items[i];
+    // array starts from index 0
+    array[i] = items[i];
   }
   IncreaseSize(size);
 }
@@ -160,7 +160,7 @@ INDEX_TEMPLATE_ARGUMENTS
 bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType &value,
                                         const KeyComparator &comparator) const {
   // TODO: Use binary search
-  for(int i=1; i < GetSize(); i++) {
+  for(int i = 0; i < GetSize(); i++) {
     int result = comparator(array[i].first,key);
     if (result == 0) {
       //LOG_INFO("B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup: Found a value based on key in index: %d", i);
@@ -185,7 +185,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(
     const KeyType &key, const KeyComparator &comparator) {
   
   int keyIndex = -1;
-  for (int i = 1; i < GetSize() - 1; ++i) {
+  for (int i = 0; i < GetSize(); ++i) {
     if (comparator(array[i].first, key) == 0) {
       keyIndex = i;
       break;
@@ -198,7 +198,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(
   }
 
   // shuffle to left by 1
-  for (int i = keyIndex; i < GetSize() - 1; ++i) {
+  for (int i = keyIndex; i < GetSize(); ++i) {
     array[i] = array[i+1];
   }
   IncreaseSize(-1);
@@ -217,7 +217,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient,
                                            int, BufferPoolManager *) {
   // NOTE: This function assume current page is at the right hand of recipient
 
-  recipient->CopyAllFrom(&array[1], GetSize() - 1);
+  recipient->CopyAllFrom(&array[0], GetSize());
   // leaf has no children
   
   // assumption: current page is at the right hand of recipient
@@ -247,9 +247,9 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(
     BPlusTreeLeafPage *recipient,
     BufferPoolManager *buffer_pool_manager) {
 
-  recipient->CopyLastFrom(array[1]);
-  // remove index 1 node
-  for (int i = 1; i < GetSize() - 1; ++i) {
+  recipient->CopyLastFrom(array[0]);
+  // remove index 0 node
+  for (int i = 0; i < GetSize(); ++i) {
     array[i] = array[i + 1];
   }
 
@@ -259,7 +259,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(
 
   // if parent's node key is our removed key, change the node key
   int ourPageIdInParentIndex = parentNode->ValueIndex(GetPageId());
-  parentNode->SetKeyAt(ourPageIdInParentIndex, KeyAt(1)); // Our new first key. Copy up to parent
+  parentNode->SetKeyAt(ourPageIdInParentIndex, KeyAt(0)); // Our new first key. Copy up to parent
 
   buffer_pool_manager->UnpinPage(pPage->GetPageId(), true);
   IncreaseSize(-1);
@@ -304,11 +304,11 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyFirstFrom(
     BufferPoolManager *buffer_pool_manager) {
 
   // move every item to the next, to give space to our new record
-  // loop until i > 1, since the 1st node is invalid, 2nd is meaningful
-  for (int i = GetSize(); i > 1; i--) {
+  // loop until i > 0
+  for (int i = GetSize(); i > 0; i--) {
     array[i] = array[i - 1];
   }
-  array[1] = item;
+  array[0] = item;
   IncreaseSize(1);
 }
 
@@ -325,7 +325,7 @@ std::string B_PLUS_TREE_LEAF_PAGE_TYPE::ToString(bool verbose) const {
     stream << "[pageId: " << GetPageId() << " parentId: " << GetParentPageId()
            << "]<" << GetSize() << "> ";
   }
-  int entry = 1;
+  int entry = 0;
   int end = GetSize();
   bool first = true;
 

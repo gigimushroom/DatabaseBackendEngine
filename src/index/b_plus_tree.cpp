@@ -133,7 +133,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
 
     LOG_INFO("After split, splited leaf is %s", newSiblingLeaf->ToString(false).c_str());
 
-    KeyType keyInParent = newSiblingLeaf->GetItem(1).first;
+    KeyType keyInParent = newSiblingLeaf->GetItem(0).first;
     InsertIntoParent(leaf, keyInParent, newSiblingLeaf, nullptr);
 
     buffer_pool_manager_->UnpinPage(newSiblingLeaf->GetPageId(), true);
@@ -303,7 +303,8 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
   bool isRightSibling = false;
 
   // Check if left sibling can redistribute
-  if (index - 1 > 0) {
+  // TODO: internal and leaf same logic?
+  if (index - 1 >= 0) {
     v = pPage->ValueIndex(index - 1);
     auto *siblingRawPage = buffer_pool_manager_->FetchPage(v);
     auto *sibling = reinterpret_cast<decltype(node)>(siblingRawPage->GetData());
@@ -437,7 +438,7 @@ bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
     // root only has one child which need to be deleted
     // child is the new root
     auto root = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(old_root_node);
-    page_id_t childPageId = root->ValueAt(1);
+    page_id_t childPageId = root->ValueAt(0);
 
     // set child page's parent to be invalid
     auto *rawPage = buffer_pool_manager_->FetchPage(childPageId);
@@ -508,7 +509,7 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key,
 
     // if leftMost flag == true, find the left most leaf page
     if (leftMost) {
-      page_id = internalPage->ValueAt(1);
+      page_id = internalPage->ValueAt(0);
     } else {
       page_id = internalPage->Lookup(key, comparator_);
     }
