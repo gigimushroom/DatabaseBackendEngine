@@ -52,6 +52,10 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
   Page * page = nullptr;
   if (page_table_->Find(page_id, page)) {
     page->pin_count_++;
+    if (page->pin_count_ >= 6) {
+      page->pin_count_++;
+      page->pin_count_--;
+    }
 
     // Delete page in LRU replacer!
     replacer_->Erase(page);

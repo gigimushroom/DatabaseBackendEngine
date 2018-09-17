@@ -222,7 +222,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(
   parentNode->Remove(index_in_parent);
 
   // unpin parent page
-  buffer_pool_manager->UnpinPage(parentNode->GetPageId(), true);
+  buffer_pool_manager->UnpinPage(GetParentPageId(), true);
 
   recipient->CopyAllFrom(&array[1], GetSize() - 1, buffer_pool_manager);  
 
@@ -232,7 +232,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(
     BPlusTreePage *node =
         reinterpret_cast<BPlusTreePage *>(page->GetData());
     node->SetParentPageId(recipient->GetPageId());
-    buffer_pool_manager->UnpinPage(page->GetPageId(), true);
+    buffer_pool_manager->UnpinPage(ValueAt(i), true);
   }
   
   SetSize(0); // we are empty
@@ -267,7 +267,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(
   BPlusTreePage *node =
       reinterpret_cast<BPlusTreePage *>(page->GetData());
   node->SetParentPageId(recipient->GetPageId());
-  buffer_pool_manager->UnpinPage(page->GetPageId(), true);
+  buffer_pool_manager->UnpinPage(array[1].second, true);
 
   Remove(1);
 
@@ -279,7 +279,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(
   int ourPageIdInParentIndex = parentNode->ValueIndex(GetPageId());
   parentNode->SetKeyAt(ourPageIdInParentIndex, KeyAt(1)); // Our new first key. Copy up to parent
 
-  buffer_pool_manager->UnpinPage(pPage->GetPageId(), true);
+  buffer_pool_manager->UnpinPage(GetParentPageId(), true);
   IncreaseSize(-1);
 }
 
@@ -309,7 +309,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
   assert(node);
   node->SetParentPageId(recipient->GetPageId());
   
-  buffer_pool_manager->UnpinPage(page->GetPageId(), true); 
+  buffer_pool_manager->UnpinPage(pair.second, true); 
 
   auto *pPage = buffer_pool_manager->FetchPage(GetParentPageId());
   BPlusTreeInternalPage *parentNode =
@@ -320,7 +320,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(
   parentNode->SetKeyAt(parent_index, pair.first); 
 
   // now we do clean up, including remove the last node
-  buffer_pool_manager->UnpinPage(pPage->GetPageId(), true);
+  buffer_pool_manager->UnpinPage(GetParentPageId(), true);
   Remove(GetSize() - 1); // remove last one
   IncreaseSize(-1);
 }

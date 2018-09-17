@@ -262,7 +262,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(
   int ourPageIdInParentIndex = parentNode->ValueIndex(GetPageId());
   parentNode->SetKeyAt(ourPageIdInParentIndex, KeyAt(0)); // Our new first key. Copy up to parent
 
-  buffer_pool_manager->UnpinPage(pPage->GetPageId(), true);
+  buffer_pool_manager->UnpinPage(GetParentPageId(), true);
   IncreaseSize(-1);
 }
 
@@ -293,7 +293,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveLastToFrontOf(
   parentNode->SetKeyAt(parentIndex, pair.first); 
 
   // now we do clean up, including remove the last node
-  buffer_pool_manager->UnpinPage(pPage->GetPageId(), true);
+  buffer_pool_manager->UnpinPage(GetParentPageId(), true);
 
   // index is the the last one, so we don't need to shuffle, just reduce our size
   IncreaseSize(-1);

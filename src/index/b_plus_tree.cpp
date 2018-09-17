@@ -123,10 +123,10 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
   }
 
   auto originalSize = leaf->GetSize();
-  LOG_INFO("before insert, leaf is %s, page id is: %s", leaf->ToString(false).c_str(), std::to_string(leaf->GetPageId()).c_str());
+  //LOG_INFO("before insert, leaf is %s, page id is: %s", leaf->ToString(false).c_str(), std::to_string(leaf->GetPageId()).c_str());
 
   auto newSize = leaf->Insert(key, value, comparator_);
-  LOG_INFO("After insert, leaf is %s, page id is: %s", leaf->ToString(false).c_str(), std::to_string(leaf->GetPageId()).c_str());
+  //LOG_INFO("After insert, leaf is %s, page id is: %s", leaf->ToString(false).c_str(), std::to_string(leaf->GetPageId()).c_str());
 
   if (newSize > leaf->GetMaxSize()) {
     // we need to split
@@ -524,7 +524,8 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key,
   }
 
   // Caller should unpin the page, not us
-  //buffer_pool_manager_->UnpinPage(page_id, false);
+  // hack
+  buffer_pool_manager_->UnpinPage(page_id, false);
 
   return reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page);;
 }

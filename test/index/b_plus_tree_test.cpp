@@ -172,7 +172,7 @@ TEST(BPlusTreeTests, InsertScale) {
   auto header_page = bpm->NewPage(page_id);
   (void) header_page;
 
-  int scale = 113;
+  int scale = 400;
   std::vector<int64_t> keys;
   for (int i = 0; i < scale; ++i) {
     keys.push_back(i + 1);
@@ -188,8 +188,8 @@ TEST(BPlusTreeTests, InsertScale) {
       << tree.ToString(false) << std::endl << std::endl;
   }
 
-  std::cout << "ALl done: "
-      << tree.ToString(false) << std::endl << std::endl;
+  //std::cout << "ALl done: "
+  //    << tree.ToString(false) << std::endl << std::endl;
 
   // check all value is in the tree
   std::vector<RID> rids;
@@ -203,9 +203,6 @@ TEST(BPlusTreeTests, InsertScale) {
     
     EXPECT_EQ(rids[0].GetSlotNum(), value);
   }
-
-  //std::cout << "Before range query: "
-  //    << tree.ToString(false) << std::endl << std::endl;
 
   // range query
   int64_t start_key = 1;
