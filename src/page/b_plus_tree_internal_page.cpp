@@ -27,7 +27,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(page_id_t page_id,
 
   // header size is 20 bytes, another 4 bytes for the 1st invalid k/v pair
   // Total record size divded by each record size is max allowed size
-  int size = (PAGE_SIZE - 20 - 4) / (sizeof(KeyType) + sizeof(page_id_t));
+  int size = (PAGE_SIZE - sizeof(B_PLUS_TREE_INTERNAL_PAGE_TYPE)) / sizeof(MappingType) - 1; 
   LOG_INFO("Max size of internal page is: %d", size);
   SetMaxSize(size);
 }

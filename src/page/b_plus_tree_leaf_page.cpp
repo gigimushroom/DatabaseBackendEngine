@@ -32,7 +32,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id) {
   
   // header size is 24 bytes
   // Total record size divded by each record size is max allowed size
-  int size = (PAGE_SIZE - 24) / (sizeof(KeyType) + sizeof(ValueType));
+  // IMPORTANT: leave a always available slot for insertion! Otherwise, insert will cause memory stomp
+  int size = (PAGE_SIZE - sizeof(B_PLUS_TREE_LEAF_PAGE_TYPE)) / sizeof(MappingType) - 1; 
   LOG_INFO("Max size of leaf page is: %d", size);
   SetMaxSize(size);
 }
@@ -129,7 +130,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(
     BPlusTreeLeafPage *recipient,
     __attribute__((unused)) BufferPoolManager *buffer_pool_manager) {
   // remove from split index to the end
-  int splitIndex = GetMaxSize() / 2;
+  int splitIndex = (GetSize() + 1) / 2;
   recipient->CopyHalfFrom(&array[splitIndex], GetSize() - splitIndex);
 
   IncreaseSize(-1 * (GetSize() - splitIndex));
