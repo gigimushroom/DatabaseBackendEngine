@@ -48,6 +48,7 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key,
   result.resize(1);              
   ValueType v;
   if (leaf->Lookup(key, result[0], comparator_)) {
+    buffer_pool_manager_->UnpinPage(leaf->GetPageId(), true);
     return true; // return false if duplicate
   }
  
@@ -119,6 +120,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
   }                         
   ValueType v;
   if (leaf->Lookup(key, v, comparator_)) {
+    buffer_pool_manager_->UnpinPage(leaf->GetPageId(), true);
     return false; // return false if duplicate
   }
 
@@ -525,7 +527,7 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key,
 
   // Caller should unpin the page, not us
   // hack
-  buffer_pool_manager_->UnpinPage(page_id, false);
+  //buffer_pool_manager_->UnpinPage(page_id, false);
 
   return reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(page);;
 }
@@ -573,7 +575,7 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
       auto *rawPage = buffer_pool_manager_->FetchPage(page_id);
       BPlusTreePage *item =
         reinterpret_cast<BPlusTreePage *>(rawPage->GetData());
-
+      
       if (item->IsLeafPage()) {
         auto leaf = reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *>(item);
         std::string curLeaf = leaf->ToString(verbose);
@@ -583,16 +585,15 @@ std::string BPLUSTREE_TYPE::ToString(bool verbose) {
         result += inner->ToString(verbose);
         for (int i = 0; i < inner->GetSize(); i++) {
           page_id_t page = inner->ValueAt(i);
-          next.push_back((page));
+          next.push_back(page);
         }
       }
 
       int cnt = rawPage->GetPinCount();
       result += " ref: " + std::to_string(cnt);
-      //if (cnt != 1) {
-       // caution += std::to_string(page_id) + " cnt:" + std::to_string(cnt);
-      //}
-
+      if (cnt >= 2) {
+        //caution += std::to_string(page_id) + " cnt:" + std::to_string(cnt);
+      }
       buffer_pool_manager_->UnpinPage(page_id, false);
     }
     swap(v, next);

@@ -17,7 +17,9 @@ INDEXITERATOR_TYPE::IndexIterator(BPlusTreeLeafPage<KeyType, ValueType, KeyCompa
     leaf_(leaf), index_(index_), buff_pool_manager_(buff_pool_manager) {}
 
 INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE::~IndexIterator() {}
+INDEXITERATOR_TYPE::~IndexIterator() {
+    buff_pool_manager_->UnpinPage(leaf_->GetPageId(), false);
+}
 
 template class IndexIterator<GenericKey<4>, RID, GenericComparator<4>>;
 template class IndexIterator<GenericKey<8>, RID, GenericComparator<8>>;

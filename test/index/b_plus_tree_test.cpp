@@ -15,7 +15,7 @@
 
 namespace cmudb {
 
-/*
+
 TEST(BPlusTreeTests, InsertTest1) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -149,8 +149,6 @@ TEST(BPlusTreeTests, InsertTest2) {
   remove("test.db");
   remove("test.log");
 }
-*/
-
 
 TEST(BPlusTreeTests, InsertScale) {
   // create KeyComparator and index schema
@@ -172,7 +170,7 @@ TEST(BPlusTreeTests, InsertScale) {
   auto header_page = bpm->NewPage(page_id);
   (void) header_page;
 
-  int scale = 400;
+  int scale = 10000;
   std::vector<int64_t> keys;
   for (int i = 0; i < scale; ++i) {
     keys.push_back(i + 1);
@@ -183,13 +181,7 @@ TEST(BPlusTreeTests, InsertScale) {
     rid.Set((int32_t) (key >> 32), value);
     index_key.SetFromInteger(key);
     tree.Insert(index_key, rid, transaction);
-
-    std::cout << "After insert " << key << " : "
-      << tree.ToString(false) << std::endl << std::endl;
   }
-
-  //std::cout << "ALl done: "
-  //    << tree.ToString(false) << std::endl << std::endl;
 
   // check all value is in the tree
   std::vector<RID> rids;

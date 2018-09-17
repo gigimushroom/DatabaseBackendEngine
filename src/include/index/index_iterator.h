@@ -47,6 +47,7 @@ public:
         buff_pool_manager_->UnpinPage(leaf_->GetPageId(), false);
         leaf_ =
             reinterpret_cast<B_PLUS_TREE_LEAF_PAGE_TYPE *> (buff_pool_manager_->FetchPage(next)->GetData());
+        
       }
     }
     return *this;

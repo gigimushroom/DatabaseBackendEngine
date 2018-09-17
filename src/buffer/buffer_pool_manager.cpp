@@ -52,7 +52,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
   Page * page = nullptr;
   if (page_table_->Find(page_id, page)) {
     page->pin_count_++;
-    if (page->pin_count_ >= 6) {
+    if (page->pin_count_ >= 4) {
       page->pin_count_++;
       page->pin_count_--;
     }
@@ -60,7 +60,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
     // Delete page in LRU replacer!
     replacer_->Erase(page);
     
-    //LOG_INFO("FetchPage: page id %d still in hashtable, count: %d", page_id, page->pin_count_);
+    //LOG_INFO("FetchPage: page id %s still in hashtable, count: %d", std::to_string(page_id).c_str(), page->pin_count_);
     return page;
   } else {
     if (!free_list_->empty()) {
