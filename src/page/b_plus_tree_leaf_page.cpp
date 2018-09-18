@@ -195,7 +195,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(
 
   if (keyIndex == -1) {
     LOG_INFO("B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord: key not found");
-    return 0; // Not found
+    return GetSize(); // Not found
   }
 
   // shuffle to left by 1

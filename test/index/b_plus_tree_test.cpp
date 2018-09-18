@@ -361,7 +361,7 @@ TEST(BPlusTreeTests, InsertRandom) {
 }
 
 
-/*
+
 TEST(BPlusTreeTests, DeleteBasic) {
   // create KeyComparator and index schema
   std::string createStmt = "a bigint";
@@ -415,10 +415,16 @@ TEST(BPlusTreeTests, DeleteBasic) {
 
   EXPECT_EQ(current_key, keys.size() + start_key);
 
+  std::cout << "Full tree: "
+     << tree.ToString(false) << std::endl << std::endl;
+
   std::vector<int64_t> remove_keys = {2, 5, 3, 1, 4};
   for (auto key : remove_keys) {
     index_key.SetFromInteger(key);
     tree.Remove(index_key, transaction);
+
+    std::cout << "After delete " << key << " : "
+      << tree.ToString(false) << std::endl << std::endl;
   }
 
   // all gone
@@ -438,6 +444,7 @@ TEST(BPlusTreeTests, DeleteBasic) {
   remove("test.log");
 }
 
+/*
 TEST(BPlusTreeTests, DeleteScale) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -518,9 +525,9 @@ TEST(BPlusTreeTests, DeleteScale) {
   delete bpm;
   remove("test.db");
   remove("test.log");
-}
+}*/
 
-
+/*
 TEST(BPlusTreeTests, DeleteRandom) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");

@@ -260,8 +260,11 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
 
   auto shouldRemovePage = false;
   int totalSize = leaf->RemoveAndDeleteRecord(key, comparator_);     
-  if (totalSize < (leaf->GetMinSize())) {
+  if (totalSize < (leaf->GetMinSize()) && totalSize > 0) {
     shouldRemovePage = CoalesceOrRedistribute(leaf, transaction);
+  } else if (totalSize == 0) {
+    // we are empty
+    root_page_id_ = INVALID_PAGE_ID; 
   }
 
   // unpin if after done
