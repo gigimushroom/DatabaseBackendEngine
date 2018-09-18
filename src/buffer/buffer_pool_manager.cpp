@@ -70,6 +70,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
       // Every time we victim a page, we need to write to disk if dirty
       // Then remove old entry from hashtable, and insert new entry
       if (!replacer_->Victim(page)) {
+        assert(0);
         return nullptr;
       }
     }
@@ -106,7 +107,12 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
       return false;
     }
     page->pin_count_--;
-    if (page->pin_count_ == 0) {      
+    if (page->pin_count_ == 0) {
+      /*if (page->page_id_ == 0) {
+        if (page_table_->Find(page_id, page)) {
+              assert(page->page_id_ == 0);     
+        } 
+      }*/
       replacer_->Insert(page);
     }
     //LOG_INFO("page id %d inserted to hashtable, pin count: %d", page_id, page->pin_count_);
@@ -180,6 +186,7 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
     free_list_->pop_front();
   } else {
     if (!replacer_->Victim(res)) {
+      assert(0);
       return nullptr;
     }
     LOG_INFO("page id %s is victim page, removed!", std::to_string(res->page_id_).c_str());

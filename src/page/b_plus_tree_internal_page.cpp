@@ -54,7 +54,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueIndex(const ValueType &value) const {
-  for(int i=1; i < GetSize(); i++) {
+  for(int i = 0; i < GetSize(); i++) {
     if (array[i].second == value)
       return i;
   }
@@ -125,9 +125,18 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(
     const ValueType &new_value) {
   
   int preIndex = ValueIndex(old_value);
+  assert(preIndex != -1);
+  
+  // Shift all nodes from preIndex + 1 to right by 1
+  for (int i = GetSize(); i >= preIndex + 1; i--) {
+    array[i].first = array[i - 1].first;
+    array[i].second = array[i - 1].second;
+  }
+
   // insert node after previous old node
   array[preIndex + 1].first = new_key;
   array[preIndex + 1].second = new_value;
+
   IncreaseSize(1);
   return GetSize();
 }

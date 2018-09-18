@@ -10,7 +10,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test/b_plus_tree_test",
-            "args": ["--gtest_filter=BPlusTreeTests.InsertScale"],
+            "args": ["--gtest_filter=BPlusTreeTests.InsertTestRandom"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

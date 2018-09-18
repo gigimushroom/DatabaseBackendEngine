@@ -104,12 +104,12 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key,
 
   int upperBoundKeyIndex = KeyIndex(key, comparator);
   if (upperBoundKeyIndex == -1) {
-    // all index larger than key, key should be inserted to last
+    // all index smaller than key, key should be inserted to last
     array[GetSize()] = pair;
   } else {
     // insert pair to upperBoundKeyIndex - 1
     // shuffle array to right
-    for (int i = GetSize(); i >= upperBoundKeyIndex; i--) {
+    for (int i = GetSize() - 1; i >= upperBoundKeyIndex; i--) {
       array[i + 1] = array[i];
     }
     array[upperBoundKeyIndex] = pair;
@@ -322,7 +322,7 @@ std::string B_PLUS_TREE_LEAF_PAGE_TYPE::ToString(bool verbose) const {
     return "";
   }
   std::ostringstream stream;
-  if (verbose) {
+  if (true) {
     stream << "[pageId: " << GetPageId() << " parentId: " << GetParentPageId()
            << "]<" << GetSize() << "> ";
   }
