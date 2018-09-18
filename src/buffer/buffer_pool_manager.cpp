@@ -186,7 +186,7 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
     free_list_->pop_front();
   } else {
     if (!replacer_->Victim(res)) {
-      assert(0);
+      //assert(0);
       return nullptr;
     }
     LOG_INFO("page id %s is victim page, removed!", std::to_string(res->page_id_).c_str());

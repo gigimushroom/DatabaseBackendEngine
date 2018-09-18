@@ -444,6 +444,7 @@ TEST(BPlusTreeTests, DeleteBasic) {
   remove("test.log");
 }
 
+
 /*
 TEST(BPlusTreeTests, DeleteScale) {
   // create KeyComparator and index schema
@@ -525,7 +526,8 @@ TEST(BPlusTreeTests, DeleteScale) {
   delete bpm;
   remove("test.db");
   remove("test.log");
-}*/
+}
+*/
 
 /*
 TEST(BPlusTreeTests, DeleteRandom) {
