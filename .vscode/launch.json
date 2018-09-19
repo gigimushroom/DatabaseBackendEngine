@@ -10,7 +10,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test/b_plus_tree_test",
-            "args": ["--gtest_filter=BPlusTreeTests.DeleteBasic"],
+            "args": ["--gtest_filter=BPlusTreeTests.DeleteScale"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

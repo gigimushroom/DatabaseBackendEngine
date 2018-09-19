@@ -222,21 +222,21 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveAllTo(
   auto *pPage = buffer_pool_manager->FetchPage(GetParentPageId());
   BPlusTreeInternalPage *parentNode =
         reinterpret_cast<BPlusTreeInternalPage *>(pPage->GetData());
-  //int myIndexInParentSide = parentNode->ValueIndex(GetPageId());
-  //LOG_INFO("INTERNAL_PAGE_TYPE::MoveAllTo: Remove index %d from my parent node", myIndexInParentSide);
   
   // assumption: current page is at the right hand of recipient
   assert(parentNode->ValueAt(index_in_parent) == GetPageId());
 
-  parentNode->Remove(index_in_parent);
 
   // unpin parent page
   buffer_pool_manager->UnpinPage(GetParentPageId(), true);
 
-  recipient->CopyAllFrom(&array[1], GetSize() - 1, buffer_pool_manager);  
+  // Note: When copy internal page, the index 0 needs to be populated with the correct key
+  // Caller must already fill the index 0 real key
+
+  recipient->CopyAllFrom(&array[0], GetSize(), buffer_pool_manager);  
 
   // give my children to the new recipient
-  for (int i = 1; i < GetSize(); i++) {
+  for (int i = 0; i < GetSize(); i++) {
     auto *page = buffer_pool_manager->FetchPage(ValueAt(i));
     BPlusTreePage *node =
         reinterpret_cast<BPlusTreePage *>(page->GetData());

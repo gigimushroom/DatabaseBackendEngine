@@ -59,8 +59,8 @@ public:
   void RemoveFromFile(const std::string &file_name,
                       Transaction *transaction = nullptr);
   // expose for test purpose
-  B_PLUS_TREE_LEAF_PAGE_TYPE *FindLeafPage(const KeyType &key,
-                                           bool leftMost = false);
+  B_PLUS_TREE_LEAF_PAGE_TYPE *FindLeafPage(const KeyType &key, page_id_t root_id ,
+                  bool leftMost = false);
 
 private:
   void StartNewTree(const KeyType &key, const ValueType &value);

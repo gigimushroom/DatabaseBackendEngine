@@ -445,7 +445,7 @@ TEST(BPlusTreeTests, DeleteBasic) {
 }
 
 
-/*
+
 TEST(BPlusTreeTests, DeleteScale) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -505,11 +505,16 @@ TEST(BPlusTreeTests, DeleteScale) {
 
   EXPECT_EQ(current_key, keys.size() + 1);
 
+  //std::cout << "Full tree: "
+  //    << tree.ToString(false) << std::endl << std::endl;
 
   // delete all
   for (auto key :keys) {
     index_key.SetFromInteger(key);
     tree.Remove(index_key, transaction);
+
+    std::cout << "After delete " << key << " : "
+      << tree.ToString(false) << std::endl << std::endl;
   }
 
   // check all value is in the tree
@@ -527,7 +532,7 @@ TEST(BPlusTreeTests, DeleteScale) {
   remove("test.db");
   remove("test.log");
 }
-*/
+
 
 /*
 TEST(BPlusTreeTests, DeleteRandom) {
