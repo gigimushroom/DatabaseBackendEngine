@@ -466,7 +466,7 @@ TEST(BPlusTreeTests, DeleteScale) {
   auto header_page = bpm->NewPage(page_id);
   (void) header_page;
 
-  int scale = 100;
+  int scale = 10000;
   std::vector<int64_t> keys;
   for (int i = 0; i < scale; ++i) {
     keys.push_back(i + 1);
@@ -513,8 +513,8 @@ TEST(BPlusTreeTests, DeleteScale) {
     index_key.SetFromInteger(key);
     tree.Remove(index_key, transaction);
 
-    std::cout << "After delete " << key << " : "
-      << tree.ToString(false) << std::endl << std::endl;
+    //std::cout << "After delete " << key << " : "
+    //  << tree.ToString(false) << std::endl << std::endl;   
   }
 
   // check all value is in the tree
@@ -534,7 +534,7 @@ TEST(BPlusTreeTests, DeleteScale) {
 }
 
 
-/*
+
 TEST(BPlusTreeTests, DeleteRandom) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -583,6 +583,7 @@ TEST(BPlusTreeTests, DeleteRandom) {
   remove("test.db");
   remove("test.log");
 }
+
 
 TEST(BPlusTreeTests, DeleteTest1) {
   // create KeyComparator and index schema
@@ -666,6 +667,7 @@ TEST(BPlusTreeTests, DeleteTest1) {
   remove("test.log");
 }
 
+
 TEST(BPlusTreeTests, DeleteTest2) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -747,6 +749,7 @@ TEST(BPlusTreeTests, DeleteTest2) {
   remove("test.log");
 }
 
+/*
 TEST(BPlusTreeTests, ScaleTest) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -828,6 +831,7 @@ TEST(BPlusTreeTests, ScaleTest) {
   remove("test.db");
   remove("test.log");
 }
+
 
 TEST(BPlusTreeTests, RandomTest) {
   // create KeyComparator and index schema

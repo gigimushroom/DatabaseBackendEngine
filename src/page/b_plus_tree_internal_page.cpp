@@ -269,16 +269,16 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(
     BPlusTreeInternalPage *recipient,
     BufferPoolManager *buffer_pool_manager) {
   
-  recipient->CopyLastFrom(array[1], buffer_pool_manager);
+  recipient->CopyLastFrom(array[0], buffer_pool_manager);
 
   // set the transfering node's child page's parent to recipient 
-  auto *page = buffer_pool_manager->FetchPage(array[1].second);
+  auto *page = buffer_pool_manager->FetchPage(array[0].second);
   BPlusTreePage *node =
       reinterpret_cast<BPlusTreePage *>(page->GetData());
   node->SetParentPageId(recipient->GetPageId());
-  buffer_pool_manager->UnpinPage(array[1].second, true);
+  buffer_pool_manager->UnpinPage(array[0].second, true);
 
-  Remove(1);
+  Remove(0);
 
   auto *pPage = buffer_pool_manager->FetchPage(GetParentPageId());
   BPlusTreeInternalPage *parentNode =
@@ -286,10 +286,12 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(
 
   // if parent's node key is our removed key, change the node key
   int ourPageIdInParentIndex = parentNode->ValueIndex(GetPageId());
-  parentNode->SetKeyAt(ourPageIdInParentIndex, KeyAt(1)); // Our new first key. Copy up to parent
+  parentNode->SetKeyAt(ourPageIdInParentIndex, KeyAt(0)); // Our new first key. Copy up to parent
 
   buffer_pool_manager->UnpinPage(GetParentPageId(), true);
-  IncreaseSize(-1);
+
+  // we do not need to remove, since Remove(0) already took care for us
+  //IncreaseSize(-1);
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -340,11 +342,10 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyFirstFrom(
     BufferPoolManager *buffer_pool_manager) {
   
   // move every item to the next, to give space to our new record
-  // loop until i > 1, since the 1st node is invalid, 2nd is meaningful
-  for (int i = GetSize(); i > 1; i--) {
+  for (int i = GetSize(); i > 0; i--) {
     array[i] = array[i - 1];
   }
-  array[1] = pair;
+  array[0] = pair;
   IncreaseSize(1);
 }
 

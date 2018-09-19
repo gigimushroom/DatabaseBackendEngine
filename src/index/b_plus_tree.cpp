@@ -403,13 +403,14 @@ bool BPLUSTREE_TYPE::Coalesce(
     KeyType missingKey = lf->GetItem(0).first;
     auto interNode = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(node);
     interNode->SetKeyAt(0, missingKey);
+    buffer_pool_manager_->UnpinPage(lf->GetPageId(), false);
   }  
 
   node->MoveAllTo(neighbor_node, index, buffer_pool_manager_);
 
   bool result = buffer_pool_manager_->DeletePage(node->GetPageId());
   if (!result) {
-    LOG_INFO("BPLUSTREE_TYPE::Coalesce: Failed to delete page from buffer pool manager");
+    //LOG_INFO("BPLUSTREE_TYPE::Coalesce: Failed to delete page from buffer pool manager");
   }
   // Remove node from its parent
   parent->Remove(index);
@@ -435,6 +436,16 @@ INDEX_TEMPLATE_ARGUMENTS
 template <typename N>
 void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {
   if (index == 0) {
+    
+    if (!neighbor_node->IsLeafPage()) {
+      KeyType dummy;
+      auto *lf = FindLeafPage(dummy, neighbor_node->GetPageId(), true);
+      KeyType missingKey = lf->GetItem(0).first;
+      auto interNode = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(neighbor_node);
+      interNode->SetKeyAt(0, missingKey);
+      buffer_pool_manager_->UnpinPage(lf->GetPageId(), false);
+    } 
+
     neighbor_node->MoveFirstToEndOf(node, buffer_pool_manager_);
   } else {
     neighbor_node->MoveLastToFrontOf(node, index, buffer_pool_manager_);
