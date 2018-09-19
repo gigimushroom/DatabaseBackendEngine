@@ -363,7 +363,7 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, Transaction *transaction) {
 
   if (isLeftSibling) {
     // Move us to sibling, pass in our inde in parent
-    Coalesce(node, sibling, pPage, index, transaction);
+    Coalesce(sibling, node, pPage, index, transaction);
   } else {
     // Move sibling to us, pass in sibling index in parent
     Coalesce(node, sibling, pPage, index + 1, transaction);
