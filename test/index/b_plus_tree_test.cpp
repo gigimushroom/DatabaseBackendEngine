@@ -592,10 +592,10 @@ TEST(BPlusTreeTests, DeleteRandom) {
     index_key.SetFromInteger(key);
     tree.Remove(index_key, transaction);
     c++;
-    //if (c >= 997) {
-      //std::cout << "After delete " << key << " : "
-      //<< tree.ToString(false) << std::endl << std::endl;
-    //}
+    if (c >= 997) {
+      std::cout << "After delete " << key << " : "
+      << tree.ToString(false) << std::endl << std::endl;
+    }
     //std::cout << "After delete " << key << " : "
     //  << tree.ToString(false) << std::endl << std::endl;  
   }
@@ -1025,6 +1025,9 @@ TEST(BPlusTreeTests, RandomTestQuick) {
     size = size + 1;
   }
 
+  //std::cout << "FULL TREE: " 
+  //    << tree.ToString(false) << std::endl << std::endl;
+
   EXPECT_EQ(size, 10);
 
   bpm->UnpinPage(HEADER_PAGE_ID, true);
@@ -1034,6 +1037,6 @@ TEST(BPlusTreeTests, RandomTestQuick) {
   remove("test.db");
   remove("test.log");
 }
- 
+
 
 } // namespace cmudb
