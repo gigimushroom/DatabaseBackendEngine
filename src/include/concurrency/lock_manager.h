@@ -68,8 +68,6 @@ private:
   std::condition_variable cv;
 
   std::unordered_map<RID, LockRequest> reqByRIDsMap_;
-
-
 };
 
 } // namespace cmudb

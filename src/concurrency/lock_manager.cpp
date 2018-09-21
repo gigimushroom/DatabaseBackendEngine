@@ -158,6 +158,14 @@ bool LockManager::LockUpgrade(Transaction *txn, const RID &rid) {
 bool LockManager::Unlock(Transaction *txn, const RID &rid) {
   std::unique_lock<std::mutex> lock(mutex_);
   
+  // If use strict 2PL, we only unlock if tx is completed.
+  if (strict_2PL_) {
+    if (txn->GetState() != TransactionState::ABORTED 
+      || txn->GetState() != TransactionState::COMMITTED) {
+        return false;
+      }
+  }
+
   if (txn->GetState() != TransactionState::ABORTED) {
     txn->SetState(TransactionState::SHRINKING);
   }  
