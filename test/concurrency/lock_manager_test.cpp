@@ -584,7 +584,7 @@ TEST(LockManagerTest, DeadlockTest2) {
   thread1.join();
 }
 
-/*
+
 TEST(LockManagerTest, DeadlockTest3) {
   LockManager lock_mgr{false};
   TransactionManager txn_mgr{&lock_mgr};
@@ -636,16 +636,25 @@ TEST(LockManagerTest, DeadlockTest3) {
     ready.wait();
 
     res = lock_mgr.LockShared(&txn, rid2);
-
     EXPECT_EQ(res, false);
     EXPECT_EQ(txn.GetState(), TransactionState::ABORTED);
-
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     // unlock rid
     res = lock_mgr.Unlock(&txn, rid);
 
     EXPECT_EQ(res, true);
+
+    if (txn.GetState() == TransactionState::GROWING) {
+      LOG_INFO("result of young lock state is growing");
+    }
+    if (txn.GetState() == TransactionState::ABORTED) {
+      LOG_INFO("result of young lock state is ABORTED");
+    }
+    if (txn.GetState() == TransactionState::SHRINKING) {
+      LOG_INFO("result of young lock state is SHRINKING");
+    }
     EXPECT_EQ(txn.GetState(), TransactionState::ABORTED);
   });
 
@@ -658,7 +667,7 @@ TEST(LockManagerTest, DeadlockTest3) {
   thread0.join();
   thread1.join();
 }
-*/
+
 
 
 } // namespace cmudb

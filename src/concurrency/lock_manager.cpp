@@ -29,6 +29,7 @@ bool LockManager::LockShared(Transaction *txn, const RID &rid) {
       // abort if tx id ls younger than current one. Number bigger means younger
       txn_id_t curOwnerId = *req.granted_ids.begin();
       if (curOwnerId < txnId) {
+        LOG_INFO("Kill young tx. LockShared not granted for txn id %d, rid: %s", txnId, rid.ToString().c_str());
         txn->SetState(TransactionState::ABORTED);
         return false;
       }
@@ -157,7 +158,9 @@ bool LockManager::LockUpgrade(Transaction *txn, const RID &rid) {
 bool LockManager::Unlock(Transaction *txn, const RID &rid) {
   std::unique_lock<std::mutex> lock(mutex_);
   
-  txn->SetState(TransactionState::SHRINKING);
+  if (txn->GetState() != TransactionState::ABORTED) {
+    txn->SetState(TransactionState::SHRINKING);
+  }  
 
   LockRequest& req = reqByRIDsMap_[rid];
   if (req.granted_ids.empty()) {
@@ -178,10 +181,8 @@ bool LockManager::Unlock(Transaction *txn, const RID &rid) {
       req.waiting_list_.pop_front();
       req.oldest_id_ = next.txid;
     }
-
     cv.notify_all();
   }
-
   return true;
 }
 
