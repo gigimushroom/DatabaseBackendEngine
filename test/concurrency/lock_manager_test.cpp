@@ -29,6 +29,8 @@ public:
  * This test is only a sanity check. Please do not rely on this test
  * to check the correctness.
  */
+
+/*
 TEST(LockManagerTest, BasicTest) {
   LockManager lock_mgr{false};
   TransactionManager txn_mgr{&lock_mgr};
@@ -55,6 +57,7 @@ TEST(LockManagerTest, BasicTest) {
   t0.join();
   t1.join();
 }
+
 
 TEST(LockManagerTest, BasicShareTest) {
   LockManager lock_mgr{false};
@@ -141,6 +144,8 @@ TEST(LockManagerTest, BasicShareTest) {
   t5.join();
   t6.join();
 }
+*/
+
 
 TEST(LockManagerTest, BasicExclusiveTest) {
   LockManager lock_mgr{false};
@@ -217,6 +222,7 @@ TEST(LockManagerTest, BasicExclusiveTest) {
   t2.join();
 }
 
+/*
 TEST(LockManagerTest, BasicUpdateTest) {
   LockManager lock_mgr{false};
   TransactionManager txn_mgr{&lock_mgr};
@@ -642,5 +648,7 @@ TEST(LockManagerTest, DeadlockTest3) {
   thread0.join();
   thread1.join();
 }
+
+*/
 
 } // namespace cmudb
