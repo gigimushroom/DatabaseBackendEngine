@@ -30,7 +30,7 @@ public:
  * to check the correctness.
  */
 
-/*
+
 TEST(LockManagerTest, BasicTest) {
   LockManager lock_mgr{false};
   TransactionManager txn_mgr{&lock_mgr};
@@ -144,7 +144,7 @@ TEST(LockManagerTest, BasicShareTest) {
   t5.join();
   t6.join();
 }
-*/
+
 
 
 TEST(LockManagerTest, BasicExclusiveTest) {
@@ -222,7 +222,7 @@ TEST(LockManagerTest, BasicExclusiveTest) {
   t2.join();
 }
 
-/*
+
 TEST(LockManagerTest, BasicUpdateTest) {
   LockManager lock_mgr{false};
   TransactionManager txn_mgr{&lock_mgr};
@@ -315,6 +315,10 @@ TEST(LockManagerTest, BasicUpdateTest) {
   t3.join();
 }
 
+
+
+
+
 TEST(LockManagerTest, BasicTest1) {
   LockManager lock_mgr{false};
   TransactionManager txn_mgr{&lock_mgr};
@@ -391,6 +395,7 @@ TEST(LockManagerTest, BasicTest1) {
   thread1.join();
   thread2.join();
 }
+
 
 TEST(LockManagerTest, BasicTest2) {
   LockManager lock_mgr{false};
@@ -471,6 +476,9 @@ TEST(LockManagerTest, BasicTest2) {
   thread2.join();
 }
 
+
+
+
 // basic wait-die test
 TEST(LockManagerTest, DeadlockTest1) {
   LockManager lock_mgr{false};
@@ -522,6 +530,7 @@ TEST(LockManagerTest, DeadlockTest1) {
   thread0.join();
   thread1.join();
 }
+
 
 TEST(LockManagerTest, DeadlockTest2) {
   LockManager lock_mgr{false};
@@ -575,6 +584,7 @@ TEST(LockManagerTest, DeadlockTest2) {
   thread1.join();
 }
 
+/*
 TEST(LockManagerTest, DeadlockTest3) {
   LockManager lock_mgr{false};
   TransactionManager txn_mgr{&lock_mgr};
@@ -648,7 +658,7 @@ TEST(LockManagerTest, DeadlockTest3) {
   thread0.join();
   thread1.join();
 }
-
 */
+
 
 } // namespace cmudb

@@ -42,3 +42,18 @@ ready.wait(); // wait until value got set
 thread 2:
 go.set_value();
 
+
+http://www.cs.colostate.edu/~cs551/CourseNotes/Deadlock/WaitWoundDie.html
+The Wait-Die algorithm: 
+Allow wait only if waiting process is older. 
+The Wait-Die algorithm kills the younger process. 
+    When the younger process restarts 
+        and requests the resource again, 
+    it may be killed once more.
+
+The Wound-Wait algorithm: 
+Otherwise allow wait only if waiting process is younger. 
+The Wound-Wait algorithm preempts the younger process. 
+    When the younger process re-requests resource, 
+        it has to wait for older process to finish. 
+This is the better of the two algorithms.    

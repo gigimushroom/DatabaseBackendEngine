@@ -25,6 +25,14 @@ bool LockManager::LockShared(Transaction *txn, const RID &rid) {
       LOG_INFO("LockShared granted for txn id %d, rid: %s", txnId, rid.ToString().c_str());
       return true;
     } else {
+      
+      // abort if tx id ls younger than current one. Number bigger means younger
+      txn_id_t curOwnerId = *req.granted_ids.begin();
+      if (curOwnerId < txnId) {
+        txn->SetState(TransactionState::ABORTED);
+        return false;
+      }
+
       // block if there is exclusive lock already
       auto d = *req.granted_ids.begin();
       LOG_INFO("LockShared not granted for txn id %d, rid: %s. Due to already has exclusive lock from %d. Waiting...",
@@ -47,7 +55,7 @@ bool LockManager::LockShared(Transaction *txn, const RID &rid) {
         return found;
       });
       LOG_INFO("After wait. LockShared granted for txn id %d, rid: %s.", txnId, rid.ToString().c_str());
-      if (req.oldest_id_ == -1) {
+      if (txnId < req.oldest_id_ || req.oldest_id_ == -1) {
         req.oldest_id_ = txnId;
       }
       req.lock_state_ = SHARED;
@@ -63,42 +71,87 @@ bool LockManager::LockExclusive(Transaction *txn, const RID &rid) {
   txn_id_t txnId = txn->GetTransactionId();
 
   if (req.granted_ids.empty()) {
-    // Grant it
-    
+    // Grant it    
     req.granted_ids.insert(txnId);
     req.oldest_id_ = txnId;
     req.lock_state_ = EXCLUSIVE;
     LOG_INFO("LockExclusive granted for txn id %d, rid: %s", txnId, rid.ToString().c_str());
   } else {
+    // abort if tx id ls younger than current one. Number bigger means younger
+    txn_id_t curOwnerId = *req.granted_ids.begin();
+    if (curOwnerId < txnId) {
+      txn->SetState(TransactionState::ABORTED);
+      return false;
+    }
+
     // block if there is exclusive lock already
-      LOG_INFO("LockExclusive not granted for txn id %d, rid: %s. Due to already has exclusive lock from %d. Waiting...",
-         txnId, rid.ToString().c_str(), *req.granted_ids.begin());
-      
-      LockRequest::WaitingItem item;
-      item.lock_state_ = EXCLUSIVE;
-      item.txid = txnId;
-      req.waiting_list_.push_back(item);
+    LOG_INFO("LockExclusive not granted for txn id %d, rid: %s. Due to already has exclusive lock from %d. Waiting...",
+        txnId, rid.ToString().c_str(), *req.granted_ids.begin());    
+    LockRequest::WaitingItem item;
+    item.lock_state_ = EXCLUSIVE;
+    item.txid = txnId;
+    req.waiting_list_.push_back(item);
 
-      // & means pass in this ptr ?
-      cv.wait(lock, [&]{
-        bool found = (req.granted_ids.find(txnId) != req.granted_ids.end());
-        return found;
-      });
+    // & means pass in this ptr ?
+    cv.wait(lock, [&]{
+      bool found = (req.granted_ids.find(txnId) != req.granted_ids.end());
+      return found;
+    });
 
-      LOG_INFO("LockExclusive for txn id %d, rid: %s. After wait", txnId, rid.ToString().c_str());
-      if (req.oldest_id_ == -1) {
-        req.oldest_id_ = txnId;
-      }
-      req.lock_state_ = EXCLUSIVE;      
-      
+    LOG_INFO("LockExclusive for txn id %d, rid: %s. After wait", txnId, rid.ToString().c_str());
+    req.oldest_id_ = txnId;
+    req.lock_state_ = EXCLUSIVE;        
   }  
-
   return true;
 }
 
 bool LockManager::LockUpgrade(Transaction *txn, const RID &rid) {
   std::unique_lock<std::mutex> lock(mutex_);
-  return false;
+
+  if (txn->GetState() == TransactionState::ABORTED) {
+    return false;
+  }
+
+  LockRequest& req = reqByRIDsMap_[rid];
+  txn_id_t txnId = txn->GetTransactionId();
+
+  if (req.granted_ids.find(txnId) != req.granted_ids.end()) {
+    if (req.granted_ids.size() == 1) {
+      // only me, upgrade successfully
+      req.oldest_id_ = txnId;
+      req.lock_state_ = EXCLUSIVE;
+      LOG_INFO("LockUpgrade for txn id %d, rid: %s. Upgraded, we the current only one.", txnId, rid.ToString().c_str());
+    } else {
+      // we remove ourself, and push to the front of the waiting list
+      req.granted_ids.erase(txnId);
+      LockRequest::WaitingItem item;
+      item.lock_state_ = EXCLUSIVE;
+      item.txid = txnId;
+      req.waiting_list_.push_front(item);
+      LOG_INFO("LockUpgrade for txn id %d, rid: %s. Removed ourself from current. Added to waiting queue first node", txnId, rid.ToString().c_str());
+      cv.wait(lock, [&]{
+        bool found = (req.granted_ids.find(txnId) != req.granted_ids.end());
+        return found;
+      });
+
+      if (txn->GetState() == TransactionState::ABORTED) {
+        // cleanup
+        return false;
+      }
+
+      LOG_INFO("LockUpgrade for txn id %d, rid: %s. Upgraded after wait.", txnId, rid.ToString().c_str());
+      req.oldest_id_ = txnId;// we are the only one
+      req.lock_state_ = EXCLUSIVE; 
+    }     
+  } else {    
+    for (auto item : req.waiting_list_) {
+      if (item.txid == txnId) {
+        item.lock_state_ = EXCLUSIVE;
+        LOG_INFO("LockUpgrade for txn id %d, rid: %s. Modified state, and leave", txnId, rid.ToString().c_str());
+      }
+    } 
+  }  
+  return true;
 }
 
 bool LockManager::Unlock(Transaction *txn, const RID &rid) {
@@ -123,6 +176,7 @@ bool LockManager::Unlock(Transaction *txn, const RID &rid) {
       req.lock_state_ = next.lock_state_;
       req.granted_ids.insert(next.txid);
       req.waiting_list_.pop_front();
+      req.oldest_id_ = next.txid;
     }
 
     cv.notify_all();
