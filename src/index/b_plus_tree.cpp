@@ -155,14 +155,9 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
   }
 
   auto originalSize = leaf->GetSize();
-  //LOG_INFO("before insert, leaf is %s, page id is: %s", leaf->ToString(false).c_str(), std::to_string(leaf->GetPageId()).c_str());
-
   auto newSize = leaf->Insert(key, value, comparator_);
-  //LOG_INFO("After insert, leaf is %s, page id is: %s", leaf->ToString(false).c_str(), std::to_string(leaf->GetPageId()).c_str());
 
   if (newSize > leaf->GetMaxSize()) {
-    // we need to split
-
     LOG_INFO("insert into leaf causing split");
     B_PLUS_TREE_LEAF_PAGE_TYPE *newSiblingLeaf = Split(leaf);
 
@@ -616,12 +611,27 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, pag
           LOG_INFO("Acquire... RLatch for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
           rawPage->RLatch();
           LOG_INFO("Acquired RLatch for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
+
+          transaction->AddIntoPageSet(rawPage);
+          //UnLockUnPinPages(transaction, SEARCH, false);
+          // unlock parent page
+
         } else {
           LOG_INFO("Acquire... WLatch for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
           rawPage->WLatch();
           LOG_INFO("Acquired WLatch for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
+
+          transaction->AddIntoPageSet(rawPage);
+
+          // if node safe for insert
+          // unlock only ancestors
+          // UnLockUnPinPages(transaction, SEARCH, false); // unlock parent page
+
+          // if node safe for delete
+          // unlock ancestor
+
         }      
-        transaction->AddIntoPageSet(rawPage);
+        
       } else {
         LOG_INFO("Already in lock queue for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
       }      
