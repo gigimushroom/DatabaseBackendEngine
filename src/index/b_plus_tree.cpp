@@ -147,7 +147,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
   ValueType v;
   if (leaf->Lookup(key, v, comparator_)) {
     if (transaction) {
-      UnLockUnPinPages(transaction, SEARCH, true);
+      UnLockUnPinPages(transaction, INSERT, true);
     } else {
         buffer_pool_manager_->UnpinPage(leaf->GetPageId(), true);
     }
@@ -176,7 +176,7 @@ bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value,
   }
 
   if (transaction) {
-      UnLockUnPinPages(transaction, SEARCH, true);
+      UnLockUnPinPages(transaction, INSERT, true);
   } else {
       buffer_pool_manager_->UnpinPage(leaf->GetPageId(), true);
   }
@@ -302,7 +302,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
   }
 
   if (transaction) {
-    UnLockUnPinPages(transaction, SEARCH, true);
+    UnLockUnPinPages(transaction, DELETE, true);
   } else {
       buffer_pool_manager_->UnpinPage(leaf->GetPageId(), true);
   }
