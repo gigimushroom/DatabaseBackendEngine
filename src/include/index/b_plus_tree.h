@@ -25,6 +25,8 @@ namespace cmudb {
 INDEX_TEMPLATE_ARGUMENTS
 class BPlusTree {
 public:
+  enum OpType { SEARCH, INSERT, DELETE };
+
   explicit BPlusTree(const std::string &name,
                            BufferPoolManager *buffer_pool_manager,
                            const KeyComparator &comparator,
@@ -59,8 +61,8 @@ public:
   void RemoveFromFile(const std::string &file_name,
                       Transaction *transaction = nullptr);
   // expose for test purpose
-  B_PLUS_TREE_LEAF_PAGE_TYPE *FindLeafPage(const KeyType &key, page_id_t root_id ,
-                  bool leftMost = false);
+  B_PLUS_TREE_LEAF_PAGE_TYPE *FindLeafPage(const KeyType &key, page_id_t root_id,
+                  Transaction *transaction = nullptr, OpType op = SEARCH, bool leftMost = false);
 
 private:
   void StartNewTree(const KeyType &key, const ValueType &value);
@@ -88,6 +90,8 @@ private:
   bool AdjustRoot(BPlusTreePage *node);
 
   void UpdateRootPageId(int insert_record = false);
+
+  void UnLockUnPinPages(Transaction *transaction, OpType op, bool dirty = false);
 
   // member variable
   std::string index_name_;
