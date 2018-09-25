@@ -352,8 +352,11 @@ TEST(BPlusTreeConcurrentTest, MixTest) {
   delete bpm;
   remove("test.db");
   remove("test.log");
+
+  std::cout << "DONE!" << std::endl;
 }
 
+/*
 TEST(BPlusTreeConcurrentTest, MixTest2) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -419,6 +422,6 @@ TEST(BPlusTreeConcurrentTest, MixTest2) {
   remove("test.db");
   remove("test.log");
 }
-
+*/
 
 } // namespace cmudb
