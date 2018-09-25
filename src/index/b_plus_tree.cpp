@@ -74,6 +74,7 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key,
     return true; // return false if duplicate
   }
  
+  result.clear();
   if (transaction) {
     UnLockUnPinPages(transaction, SEARCH, false);
   } else {
