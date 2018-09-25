@@ -595,7 +595,6 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, pag
     page = reinterpret_cast<BPlusTreePage *>(rawPage->GetData());
 
     if (transaction) {
-
       // hack. Only add if not exist
       auto itr = transaction->GetPageSet()->begin();
       auto end = transaction->GetPageSet()->end();
@@ -611,29 +610,21 @@ B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, pag
           LOG_INFO("Acquire... RLatch for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
           rawPage->RLatch();
           LOG_INFO("Acquired RLatch for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
-
-          transaction->AddIntoPageSet(rawPage);
-          //UnLockUnPinPages(transaction, SEARCH, false);
-          // unlock parent page
-
+          UnLockUnPinPages(transaction, SEARCH, false); 
         } else {
           LOG_INFO("Acquire... WLatch for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
           rawPage->WLatch();
           LOG_INFO("Acquired WLatch for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
 
-          transaction->AddIntoPageSet(rawPage);
+          int ops = (op == INSERT) ? 1 : 2;
+          if (page->IsSafe(ops)) {
+            UnLockUnPinPages(transaction, op, false);
+          }
+        }
 
-          // if node safe for insert
-          // unlock only ancestors
-          // UnLockUnPinPages(transaction, SEARCH, false); // unlock parent page
-
-          // if node safe for delete
-          // unlock ancestor
-
-        }      
-        
+        transaction->AddIntoPageSet(rawPage);
       } else {
-        LOG_INFO("Already in lock queue for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
+        //LOG_INFO("Already in lock queue for page id is: %s", std::to_string(rawPage->GetPageId()).c_str());
       }      
     } else {
       // unpin previous page
