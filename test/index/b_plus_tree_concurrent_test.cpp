@@ -122,7 +122,8 @@ TEST(BPlusTreeConcurrentTest, InsertTest1) {
   }
   LaunchParallelTest(2, InsertHelper, std::ref(tree), keys);
 
-  //std::cerr << tree.ToString(false) << std::endl;
+  std::cout << "After insert "
+    << tree.ToString(false) << std::endl << std::endl;
 
   std::vector<RID> rids;
   GenericKey<8> index_key;
@@ -155,9 +156,11 @@ TEST(BPlusTreeConcurrentTest, InsertTest1) {
   delete bpm;
   remove("test.db");
   remove("test.log");
+
+  std::cout << "DONE!" << std::endl;
 }
 
-/*
+
 TEST(BPlusTreeConcurrentTest, InsertTest2) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -416,6 +419,6 @@ TEST(BPlusTreeConcurrentTest, MixTest2) {
   remove("test.db");
   remove("test.log");
 }
-*/
+
 
 } // namespace cmudb
