@@ -510,8 +510,6 @@ void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   if (old_root_node->GetSize() == 0) {
     // case 2
     if (old_root_node->IsLeafPage()) {
