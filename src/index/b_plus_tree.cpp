@@ -21,6 +21,9 @@ BPLUSTREE_TYPE::BPlusTree(const std::string &name,
     : index_name_(name), root_page_id_(root_page_id),
       buffer_pool_manager_(buffer_pool_manager), comparator_(comparator) {}
 
+INDEX_TEMPLATE_ARGUMENTS
+thread_local bool BPLUSTREE_TYPE::root_is_locked = false;
+
 /*
  * Helper function to decide whether current b+tree is empty
  */
@@ -42,6 +45,11 @@ void BPLUSTREE_TYPE::UnLockUnPinPages(Transaction *transaction, OpType op, bool 
       }
       transaction->GetPageSet()->pop_front();
       buffer_pool_manager_->UnpinPage(toUnlock->GetPageId(), dirty);
+  }
+
+  if (root_is_locked) {
+    root_is_locked = false;
+    unlockRoot();
   }
 }
 
@@ -96,14 +104,14 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key,
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value,
                             Transaction *transaction) {
-  bool result = true;
-  if (IsEmpty()) {
-    StartNewTree(key, value);
-    UpdateRootPageId(true);    
-  } else {
-    result = InsertIntoLeaf(key, value, transaction);
-  }    
-  return result;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (IsEmpty()) {
+      StartNewTree(key, value);
+      UpdateRootPageId(true);    
+    }
+  }
+  return InsertIntoLeaf(key, value, transaction);
 }
 /*
  * Insert constant key & value pair into an empty tree
@@ -121,10 +129,7 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
     throw std::bad_alloc();
   }
 
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    root_page_id_ = id;
-  }
+  root_page_id_ = id;
 
   UpdateRootPageId(true);
 
@@ -240,10 +245,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
     auto ip = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(newPage->GetData());
     ip->Init(parentPageId, INVALID_PAGE_ID);
 
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      root_page_id_ = parentPageId; // set root is the new created parent page
-    }    
+    root_page_id_ = parentPageId; // set root is the new created parent page
     UpdateRootPageId(false);
 
     // assign old and new nodes parent
@@ -302,10 +304,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, Transaction *transaction) {
     shouldRemovePage = CoalesceOrRedistribute(leaf, transaction);
   } else if (totalSize == 0) {
     // we are empty
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      root_page_id_ = INVALID_PAGE_ID;
-    }
+    root_page_id_ = INVALID_PAGE_ID;
   }
 
   if (transaction) {
@@ -509,8 +508,6 @@ void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   if (old_root_node->GetSize() == 0) {
     // case 2
     if (old_root_node->IsLeafPage()) {
@@ -581,6 +578,11 @@ INDEXITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
 INDEX_TEMPLATE_ARGUMENTS
 B_PLUS_TREE_LEAF_PAGE_TYPE *BPLUSTREE_TYPE::FindLeafPage(const KeyType &key, page_id_t root_id,
            Transaction *transaction, OpType op, bool leftMost) {
+  if (op != SEARCH) {
+    lockRoot();
+    root_is_locked = true;
+  }
+
   if (IsEmpty()) {
     return nullptr;
   }

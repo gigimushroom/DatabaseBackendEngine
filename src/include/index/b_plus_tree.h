@@ -93,6 +93,9 @@ private:
 
   void UnLockUnPinPages(Transaction *transaction, OpType op, bool dirty = false);
 
+  inline void lockRoot() { mutex_.lock(); }
+  inline void unlockRoot() { mutex_.unlock(); }
+
   // member variable
   std::string index_name_;
   page_id_t root_page_id_;
@@ -100,6 +103,7 @@ private:
   KeyComparator comparator_;
 
   std::mutex mutex_;
+  static thread_local bool root_is_locked;
 };
 
 } // namespace cmudb
