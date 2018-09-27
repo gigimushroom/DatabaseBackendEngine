@@ -54,7 +54,7 @@ public:
       if (reader_count_ == 0)
         writer_.notify_one();
     } else {
-      if (reader_count_ == max_readers_ - 1)
+      if (reader_count_ == max_readers_ - 1) // I don't understand
         reader_.notify_one();
     }
   }

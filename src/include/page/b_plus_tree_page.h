@@ -58,6 +58,16 @@ public:
   void SetLSN(lsn_t lsn = INVALID_LSN);
 
   std::string ToString(bool verbose = false) const { return "empty"; }
+
+  bool IsSafe(int type) {
+    if (type == 1) { // insert
+      return (GetSize() < GetMaxSize());
+    } else if (type == 2) { // delete
+      return (GetSize() >= GetMinSize());
+    }
+    return false;
+  }
+
 private:
   // member variable, attributes that both internal and leaf page share
   IndexPageType page_type_;
