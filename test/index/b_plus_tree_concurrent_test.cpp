@@ -101,6 +101,7 @@ void DeleteHelperSplit(
   delete transaction;
 }
 
+
 TEST(BPlusTreeConcurrentTest, InsertTest1) {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
@@ -428,5 +429,75 @@ TEST(BPlusTreeConcurrentTest, MixTest2) {
   remove("test.log");
 }
 
+
+/*
+TEST(BPlusTreeConcurrentTest, MixTest3) {
+  // create KeyComparator and index schema
+  Schema *key_schema = ParseCreateStatement("a bigint");
+  GenericComparator<8> comparator(key_schema);
+
+  DiskManager *disk_manager = new DiskManager("test.db");
+  BufferPoolManager *bpm = new BufferPoolManager(50, disk_manager);
+  // create b+ tree
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
+                                                           comparator);
+  GenericKey<8> index_key;
+  RID rid;
+
+  // create and fetch header_page
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(page_id);
+  (void) header_page;
+  // first, populate index
+  std::vector<int64_t> keys, all_deleted;
+  for (int i = 1; i <= 20; ++i) {
+    all_deleted.push_back(i);
+    keys.push_back(i + 20);
+  }
+  // keys1: 0,2,4...
+  // keys2: 1,3,5...
+  // keys: 100 ~ 200
+
+  // concurrent insert
+  LaunchParallelTest(4, InsertHelperSplit, std::ref(tree), std::ref(all_deleted), 4);
+
+  // concurrent insert and delete
+  std::thread t0(InsertHelper, std::ref(tree), keys, 0);
+  LaunchParallelTest(4, DeleteHelperSplit, std::ref(tree), std::ref(all_deleted), 4);
+
+  t0.join();
+
+  std::cout << "After insert "
+    << tree.ToString(false) << std::endl << std::endl;
+
+  std::vector<RID> rids;
+  for (auto key : all_deleted) {
+    rids.clear();
+    index_key.SetFromInteger(key);
+    auto res = tree.GetValue(index_key, rids);
+    EXPECT_EQ(rids.size(), 0);
+    EXPECT_EQ(false, res);
+  }
+
+  int64_t current_key = 21;
+  int64_t size = 0;
+  index_key.SetFromInteger(current_key);
+  for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
+       ++iterator) {
+    auto location = (*iterator).second;
+    EXPECT_EQ(location.GetPageId(), 0);
+    EXPECT_EQ(location.GetSlotNum(), current_key);
+    current_key = current_key + 1;
+    size = size + 1;
+  }
+
+  EXPECT_EQ(size, 20);
+
+  bpm->UnpinPage(HEADER_PAGE_ID, true);
+  delete disk_manager;
+  delete bpm;
+  remove("test.db");
+  remove("test.log");
+}*/
 
 } // namespace cmudb
