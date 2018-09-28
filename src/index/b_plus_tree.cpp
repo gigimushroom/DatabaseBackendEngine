@@ -83,6 +83,7 @@ bool BPLUSTREE_TYPE::GetValue(const KeyType &key,
   }
  
   result.clear();
+  
   if (transaction) {
     UnLockUnPinPages(transaction, SEARCH, false);
   } else {
@@ -246,6 +247,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node,
     ip->Init(parentPageId, INVALID_PAGE_ID);
 
     root_page_id_ = parentPageId; // set root is the new created parent page
+
     UpdateRootPageId(false);
 
     // assign old and new nodes parent
@@ -508,6 +510,8 @@ void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   if (old_root_node->GetSize() == 0) {
     // case 2
     if (old_root_node->IsLeafPage()) {
