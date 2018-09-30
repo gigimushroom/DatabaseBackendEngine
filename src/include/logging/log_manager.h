@@ -20,7 +20,8 @@ class LogManager {
 public:
   LogManager(DiskManager *disk_manager)
       : next_lsn_(0), persistent_lsn_(INVALID_LSN),
-        disk_manager_(disk_manager) {
+        disk_manager_(disk_manager), log_buf_offset_(0),
+        flush_size_(0) {
     // TODO: you may intialize your own defined memeber variables here
     log_buffer_ = new char[LOG_BUFFER_SIZE];
     flush_buffer_ = new char[LOG_BUFFER_SIZE];
@@ -44,6 +45,9 @@ public:
   inline void SetPersistentLSN(lsn_t lsn) { persistent_lsn_ = lsn; }
   inline char *GetLogBuffer() { return log_buffer_; }
 
+  void task1();
+  void SwapBuffer();
+
 private:
   // TODO: you may add your own member variables
   // also remember to change constructor accordingly
@@ -63,6 +67,9 @@ private:
   std::condition_variable cv_;
   // disk manager
   DiskManager *disk_manager_;
+
+  size_t log_buf_offset_;
+  size_t flush_size_;
 };
 
 } // namespace cmudb

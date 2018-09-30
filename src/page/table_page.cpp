@@ -87,7 +87,13 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID &rid, Transaction *txn,
   if (ENABLE_LOGGING) {
     // acquire the exclusive lock
     assert(lock_manager->LockExclusive(txn, rid.Get()));
+    
     // TODO: add your logging logic here
+    LogRecord log(txn->GetTransactionId(), txn->GetPrevLSN(),
+                  LogRecordType::INSERT, rid, tuple);
+    lsn_t lsn = log_manager->AppendLogRecord(log);
+    txn->SetPrevLSN(lsn);
+    SetLSN(lsn);
   }
   // LOG_DEBUG("Tuple inserted");
   return true;

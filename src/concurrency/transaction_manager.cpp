@@ -35,6 +35,8 @@ void TransactionManager::Commit(Transaction *txn) {
 
   if (ENABLE_LOGGING) {
     // TODO: write log and update transaction's prev_lsn here
+    LogRecord record(txn->GetTransactionId(), txn->GetPrevLSN(), LogRecordType::COMMIT);
+    txn->SetPrevLSN(log_manager_->AppendLogRecord(record));
   }
 
   // release all the lock
