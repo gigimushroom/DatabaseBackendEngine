@@ -50,7 +50,8 @@
         "istream": "cpp",
         "ostream": "cpp",
         "sstream": "cpp",
-        "streambuf": "cpp"
+        "streambuf": "cpp",
+        "cinttypes": "cpp"
     },
     "files.autoSave": "afterDelay",
     "workbench.editor.enablePreview": false

@@ -89,6 +89,9 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
   }
 
   log_record.lsn_ = next_lsn_++;
+
+  std::cout << log_record.ToString().c_str() << std::endl;
+  
   memcpy(log_buffer_ + log_buf_offset_, &log_record, 20);
   int pos = log_buf_offset_ + 20;
 
@@ -97,8 +100,28 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
      pos += sizeof(RID);
      // we have provided serialize function for tuple class
      log_record.insert_tuple_.SerializeTo(log_buffer_ + pos);
+  } else if (log_record.log_record_type_ == LogRecordType::MARKDELETE ||
+      log_record.log_record_type_ == LogRecordType::APPLYDELETE ||
+      log_record.log_record_type_ == LogRecordType::ROLLBACKDELETE) {
+
+     memcpy(log_buffer_ + pos, &log_record.delete_rid_, sizeof(RID));
+     pos += sizeof(RID);
+     log_record.delete_tuple_.SerializeTo(log_buffer_ + pos);
+  } else if (log_record.log_record_type_ == LogRecordType::UPDATE) {
+     memcpy(log_buffer_ + pos, &log_record.update_rid_, sizeof(RID));
+     pos += sizeof(RID);
+     
+     log_record.old_tuple_.SerializeTo(log_buffer_ + pos);
+     pos += log_record.old_tuple_.GetLength();
+
+     log_record.new_tuple_.SerializeTo(log_buffer_ + pos);
+
+  } else if (log_record.log_record_type_ == LogRecordType::NEWPAGE) {
+     //prev_page_id
+     memcpy(log_buffer_ + pos, &log_record.prev_page_id_, sizeof(page_id_t));
   }
-  log_buf_offset_ += pos;
+
+  log_buf_offset_ += log_record.size_;
   
   return log_record.lsn_;
 }

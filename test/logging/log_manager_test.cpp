@@ -33,11 +33,12 @@ TEST(LogManagerTest, BasicLogging) {
   RID rid;
   Tuple tuple = ConstructTuple(schema);
   EXPECT_TRUE(test_table->InsertTuple(tuple, rid, txn));
-  //EXPECT_TRUE(test_table->MarkDelete(rid, txn));
+  LOG_DEBUG("delete ...............................");
+  EXPECT_TRUE(test_table->MarkDelete(rid, txn));
   storage_engine->transaction_manager_->Commit(txn);
   LOG_DEBUG("Commit txn");
 
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  //std::this_thread::sleep_for(std::chrono::seconds(2));
 
   storage_engine->log_manager_->StopFlushThread();
   EXPECT_FALSE(ENABLE_LOGGING);

@@ -62,6 +62,8 @@ bool LockManager::LockShared(Transaction *txn, const RID &rid) {
       req.lock_state_ = SHARED;
     }
   }  
+
+  txn->GetSharedLockSet()->insert(rid);
   return true;
 }
 
@@ -85,6 +87,11 @@ bool LockManager::LockExclusive(Transaction *txn, const RID &rid) {
       return false;
     }
 
+    if (req.granted_ids.find(txnId) != req.granted_ids.end()) {
+      LOG_INFO("LockExclusive already granted for txn id %d, rid: %s", txnId, rid.ToString().c_str());
+      return true;
+    }
+
     // block if there is exclusive lock already
     LOG_INFO("LockExclusive not granted for txn id %d, rid: %s. Due to already has exclusive lock from %d. Waiting...",
         txnId, rid.ToString().c_str(), *req.granted_ids.begin());    
@@ -103,6 +110,8 @@ bool LockManager::LockExclusive(Transaction *txn, const RID &rid) {
     req.oldest_id_ = txnId;
     req.lock_state_ = EXCLUSIVE;        
   }  
+
+  txn->GetExclusiveLockSet()->insert(rid);
   return true;
 }
 
@@ -152,6 +161,9 @@ bool LockManager::LockUpgrade(Transaction *txn, const RID &rid) {
       }
     } 
   }  
+
+  txn->GetSharedLockSet()->erase(rid);
+  txn->GetExclusiveLockSet()->insert(rid);
   return true;
 }
 
@@ -180,6 +192,12 @@ bool LockManager::Unlock(Transaction *txn, const RID &rid) {
     req.granted_ids.erase(txnId);
     req.oldest_id_ = -1;
 
+    if (req.lock_state_ == SHARED) {
+      txn->GetSharedLockSet()->erase(rid);
+    } else {
+      txn->GetExclusiveLockSet()->erase(rid);
+    }
+    
     // notify
     LOG_INFO("Unlock granted for txn id %d, rid: %s", txnId, rid.ToString().c_str());
     if (!req.waiting_list_.empty()) {

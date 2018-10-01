@@ -34,13 +34,13 @@ namespace cmudb {
 // log record type
 enum class LogRecordType {
   INVALID = 0,
-  INSERT,
+  INSERT, //1
   MARKDELETE,
-  APPLYDELETE,
+  APPLYDELETE, //3
   ROLLBACKDELETE,
   UPDATE,
   BEGIN,
-  COMMIT,
+  COMMIT, //7
   ABORT,
   // when create a new page in heap table
   NEWPAGE,

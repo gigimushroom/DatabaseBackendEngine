@@ -135,6 +135,21 @@ bool TablePage::MarkDelete(const RID &rid, Transaction *txn,
       return false;
     }
     // TODO: add your logging logic here
+
+    int32_t tuple_offset = GetTupleOffset(slot_num);
+
+    Tuple delete_tuple;
+    delete_tuple.size_ = tuple_size;
+    delete_tuple.data_ = new char[delete_tuple.size_];
+    memcpy(delete_tuple.data_, GetData() + tuple_offset, delete_tuple.size_);
+    delete_tuple.rid_ = rid;
+    delete_tuple.allocated_ = true;
+
+    LogRecord log(txn->GetTransactionId(), txn->GetPrevLSN(),
+                  LogRecordType::MARKDELETE, rid, delete_tuple);
+    lsn_t lsn = log_manager->AppendLogRecord(log);
+    txn->SetPrevLSN(lsn);
+    SetLSN(lsn);
   }
 
   // set tuple size to negative value
@@ -189,6 +204,11 @@ bool TablePage::UpdateTuple(const Tuple &new_tuple, Tuple &old_tuple,
       return false;
     }
     // TODO: add your logging logic here
+    LogRecord log(txn->GetTransactionId(), txn->GetPrevLSN(),
+                  LogRecordType::UPDATE, rid, old_tuple, new_tuple);
+    lsn_t lsn = log_manager->AppendLogRecord(log);
+    txn->SetPrevLSN(lsn);
+    SetLSN(lsn);
   }
 
   // update
@@ -241,6 +261,12 @@ void TablePage::ApplyDelete(const RID &rid, Transaction *txn,
     assert(txn->GetExclusiveLockSet()->find(rid) !=
            txn->GetExclusiveLockSet()->end());
     // TODO: add your logging logic here
+
+    LogRecord log(txn->GetTransactionId(), txn->GetPrevLSN(),
+                  LogRecordType::APPLYDELETE, rid, delete_tuple);
+    lsn_t lsn = log_manager->AppendLogRecord(log);
+    txn->SetPrevLSN(lsn);
+    SetLSN(lsn);
   }
 
   int32_t free_space_pointer =
@@ -273,6 +299,11 @@ void TablePage::RollbackDelete(const RID &rid, Transaction *txn,
            txn->GetExclusiveLockSet()->end());
 
     // TODO: add your logging logic here
+    LogRecord log(txn->GetTransactionId(), txn->GetPrevLSN(),
+                  LogRecordType::ROLLBACKDELETE);
+    lsn_t lsn = log_manager->AppendLogRecord(log);
+    txn->SetPrevLSN(lsn);
+    SetLSN(lsn);
   }
 
   int slot_num = rid.GetSlotNum();
