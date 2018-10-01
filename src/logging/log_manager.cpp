@@ -30,7 +30,7 @@ void LogManager::task1() {
       else {
         // time out, flush
         SwapBuffer();
-        std::cout << "Thread timed out. log size is: " << flush_size_;
+        std::cout << "Thread timed out. log size is: " << flush_size_ << std::endl;
         disk_manager_->WriteLog(flush_buffer_, flush_size_);
         flush_size_ = 0;        
       }          
@@ -91,7 +91,7 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
   log_record.lsn_ = next_lsn_++;
 
   std::cout << log_record.ToString().c_str() << std::endl;
-  
+
   memcpy(log_buffer_ + log_buf_offset_, &log_record, 20);
   int pos = log_buf_offset_ + 20;
 
@@ -100,6 +100,7 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
      pos += sizeof(RID);
      // we have provided serialize function for tuple class
      log_record.insert_tuple_.SerializeTo(log_buffer_ + pos);
+     
   } else if (log_record.log_record_type_ == LogRecordType::MARKDELETE ||
       log_record.log_record_type_ == LogRecordType::APPLYDELETE ||
       log_record.log_record_type_ == LogRecordType::ROLLBACKDELETE) {

@@ -39,7 +39,7 @@ enum class LogRecordType {
   APPLYDELETE, //3
   ROLLBACKDELETE,
   UPDATE,
-  BEGIN,
+  BEGIN,   //6
   COMMIT, //7
   ABORT,
   // when create a new page in heap table

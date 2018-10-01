@@ -32,6 +32,8 @@ TEST(LogManagerTest, BasicLogging) {
   Schema *schema = ParseCreateStatement(createStmt);
   RID rid;
   Tuple tuple = ConstructTuple(schema);
+  std::cout << tuple.ToString(schema).c_str() << std::endl;
+
   EXPECT_TRUE(test_table->InsertTuple(tuple, rid, txn));
   LOG_DEBUG("delete ...............................");
   EXPECT_TRUE(test_table->MarkDelete(rid, txn));
@@ -49,16 +51,17 @@ TEST(LogManagerTest, BasicLogging) {
   storage_engine->disk_manager_->ReadLog(buffer, PAGE_SIZE, 0);
   int32_t size = *reinterpret_cast<int32_t *>(buffer);
   LOG_DEBUG("size  = %d", size);
-  size = *reinterpret_cast<int32_t *>(buffer + 20);
+  size = *reinterpret_cast<int32_t *>(buffer + 20); // insert size
   LOG_DEBUG("size  = %d", size);
-  size = *reinterpret_cast<int32_t *>(buffer + 44);
+  size = *reinterpret_cast<int32_t *>(buffer + 44); // delete tuple size?
   LOG_DEBUG("size  = %d", size);
+
 
   delete txn;
   delete storage_engine;
   LOG_DEBUG("Teared down the system");
   remove("test.db");
-  //remove("test.log");
+  remove("test.log");
 }
 
 // actually LogRecovery
