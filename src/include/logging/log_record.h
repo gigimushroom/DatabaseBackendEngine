@@ -134,7 +134,7 @@ public:
     return os.str();
   }
 
-private:
+public:
   // the length of log record(for serialization, in bytes)
   int32_t size_ = 0;
   // must have fields

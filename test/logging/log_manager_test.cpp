@@ -56,6 +56,22 @@ TEST(LogManagerTest, BasicLogging) {
   size = *reinterpret_cast<int32_t *>(buffer + 44); // delete tuple size?
   LOG_DEBUG("size  = %d", size);
 
+// deserialize header, must have fields
+  char * data = buffer + 20;
+  int32_t size_ = *reinterpret_cast<const int *>(data);
+  lsn_t lsn_ = *reinterpret_cast<const lsn_t *>(data + 4);;
+  txn_id_t txn_id_ = *reinterpret_cast<const txn_id_t *>(data + 8);
+  lsn_t prev_lsn_ = *reinterpret_cast<const lsn_t *>(data + 12);
+  LogRecordType log_record_type_ = *reinterpret_cast<const LogRecordType *>(data + 16);
+  
+  LogRecord log_record;
+  log_record.size_ = size_;
+  log_record.lsn_ = lsn_;
+  log_record.txn_id_ = txn_id_;
+  log_record.prev_lsn_ = prev_lsn_;
+  log_record.log_record_type_ = log_record_type_;
+
+  std::cout << "Logged:" << log_record.ToString().c_str() << std::endl;
 
   delete txn;
   delete storage_engine;
