@@ -47,7 +47,8 @@ public:
 
   void task1();
   void SwapBuffer();
-
+  void wakeUpFlushThread();
+  
 private:
   // TODO: you may add your own member variables
   // also remember to change constructor accordingly

@@ -15,13 +15,21 @@ void LogManager::SwapBuffer() {
   log_buf_offset_ = 0;
 }
 
+void LogManager::wakeUpFlushThread() {
+  if (log_buf_offset_ > 0) {
+    SwapBuffer();
+    // wake up flush thread
+    cv_.notify_one();
+  }  
+}
+
 void LogManager::task1() {
   
   while (ENABLE_LOGGING) {
       std::cout << "Thread another loop\n";
       std::unique_lock<std::mutex> lk(latch_);
       auto now = std::chrono::system_clock::now();
-      if(cv_.wait_until(lk, now + LOG_TIMEOUT, [](){ return false; })) {
+      if(cv_.wait_until(lk, now + LOG_TIMEOUT, [&](){ return false; })) {
         // buffer full or buffer manager signal
         std::cout << "Thread was wakenup to write log\n";
         disk_manager_->WriteLog(flush_buffer_, flush_size_);
@@ -29,10 +37,12 @@ void LogManager::task1() {
       }
       else {
         // time out, flush
-        SwapBuffer();
-        std::cout << "Thread timed out. log size is: " << flush_size_ << std::endl;
-        disk_manager_->WriteLog(flush_buffer_, flush_size_);
-        flush_size_ = 0;        
+        if (log_buf_offset_ > 0) {
+          SwapBuffer();
+          std::cout << "Thread timed out. log size is: " << flush_size_ << std::endl;
+          disk_manager_->WriteLog(flush_buffer_, flush_size_);
+          flush_size_ = 0;
+        }                
       }          
   }
 }
@@ -90,7 +100,7 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
 
   log_record.lsn_ = next_lsn_++;
 
-  std::cout << log_record.ToString().c_str() << std::endl;
+  //std::cout << log_record.ToString().c_str() << std::endl;
 
   memcpy(log_buffer_ + log_buf_offset_, &log_record, 20);
   int pos = log_buf_offset_ + 20;
@@ -123,7 +133,9 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
   }
 
   log_buf_offset_ += log_record.size_;
-  
+  std::cout << log_record.ToString().c_str() << std::endl;
+
+  std::cout << "Buffer offset is" << log_buf_offset_ << std::endl;
   return log_record.lsn_;
 }
 

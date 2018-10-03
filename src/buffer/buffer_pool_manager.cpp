@@ -195,6 +195,11 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
   assert(res->pin_count_ == 0);
     
   if (res->is_dirty_) {
+    if (ENABLE_LOGGING) {
+      while (res->GetLSN() > log_manager_->GetPersistentLSN()) {
+        log_manager_->wakeUpFlushThread();
+      }
+    }
     disk_manager_->WritePage(res->page_id_, res->GetData());
     res->is_dirty_ = false;
   }

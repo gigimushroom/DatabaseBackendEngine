@@ -10,6 +10,7 @@
 
 namespace cmudb {
 
+
 TEST(LogManagerTest, BasicLogging) {
   StorageEngine *storage_engine = new StorageEngine("test.db");
 
@@ -40,7 +41,7 @@ TEST(LogManagerTest, BasicLogging) {
   storage_engine->transaction_manager_->Commit(txn);
   LOG_DEBUG("Commit txn");
 
-  //std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
   storage_engine->log_manager_->StopFlushThread();
   EXPECT_FALSE(ENABLE_LOGGING);
@@ -51,27 +52,10 @@ TEST(LogManagerTest, BasicLogging) {
   storage_engine->disk_manager_->ReadLog(buffer, PAGE_SIZE, 0);
   int32_t size = *reinterpret_cast<int32_t *>(buffer);
   LOG_DEBUG("size  = %d", size);
-  size = *reinterpret_cast<int32_t *>(buffer + 20); // insert size
+  size = *reinterpret_cast<int32_t *>(buffer + 20); // new page size
   LOG_DEBUG("size  = %d", size);
-  size = *reinterpret_cast<int32_t *>(buffer + 44); // delete tuple size?
+  size = *reinterpret_cast<int32_t *>(buffer + 44); // insert tuple size
   LOG_DEBUG("size  = %d", size);
-
-// deserialize header, must have fields
-  char * data = buffer + 20;
-  int32_t size_ = *reinterpret_cast<const int *>(data);
-  lsn_t lsn_ = *reinterpret_cast<const lsn_t *>(data + 4);;
-  txn_id_t txn_id_ = *reinterpret_cast<const txn_id_t *>(data + 8);
-  lsn_t prev_lsn_ = *reinterpret_cast<const lsn_t *>(data + 12);
-  LogRecordType log_record_type_ = *reinterpret_cast<const LogRecordType *>(data + 16);
-  
-  LogRecord log_record;
-  log_record.size_ = size_;
-  log_record.lsn_ = lsn_;
-  log_record.txn_id_ = txn_id_;
-  log_record.prev_lsn_ = prev_lsn_;
-  log_record.log_record_type_ = log_record_type_;
-
-  std::cout << "Logged:" << log_record.ToString().c_str() << std::endl;
 
   delete txn;
   delete storage_engine;
@@ -80,8 +64,9 @@ TEST(LogManagerTest, BasicLogging) {
   remove("test.log");
 }
 
+
 // actually LogRecovery
-/*
+
 TEST(LogManagerTest, RedoTestWithOneTxn) {
   StorageEngine *storage_engine = new StorageEngine("test.db");
 
@@ -106,8 +91,8 @@ TEST(LogManagerTest, RedoTestWithOneTxn) {
   RID rid;
   Tuple tuple = ConstructTuple(schema);
   std::cout << "Tuple: " << tuple.ToString(schema) << "\n";
-  Tuple tuple1 = ConstructTuple(schema);
-  std::cout << "Tuple1: " << tuple1.ToString(schema) << "\n";
+  //Tuple tuple1 = ConstructTuple(schema);
+  //std::cout << "Tuple1: " << tuple1.ToString(schema) << "\n";
 
   auto val = tuple.GetValue(schema, 4);
   EXPECT_TRUE(test_table->InsertTuple(tuple, rid, txn));
@@ -119,13 +104,27 @@ TEST(LogManagerTest, RedoTestWithOneTxn) {
   LOG_DEBUG("SLEEPING for 2s");
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
+
   // shutdown System
   delete storage_engine;
-
+  //std::this_thread::sleep_for(std::chrono::seconds(2));
+  
   // restart system
   storage_engine = new StorageEngine("test.db");
-  LogRecovery *log_recovery = new LogRecovery(
-      storage_engine->disk_manager_, storage_engine->buffer_pool_manager_);
+
+  // some basic manually checking here
+  char buffer[PAGE_SIZE];
+  storage_engine->disk_manager_->ReadLog(buffer, PAGE_SIZE, 0);
+  int32_t size = *reinterpret_cast<int32_t *>(buffer);
+  LOG_DEBUG("check begin size  = %d", size);
+  size = *reinterpret_cast<int32_t *>(buffer + 20); // new page size
+  LOG_DEBUG("check new page size  = %d", size);
+  size = *reinterpret_cast<int32_t *>(buffer + 44); // insert tuple size
+  LOG_DEBUG("check insert size  = %d", size);
+  EXPECT_EQ(size, tuple.GetLength() + 32); // tuple's size + 20 + RID + 4 === tuple's size + 32
+
+
+  LogRecovery *log_recovery = new LogRecovery(storage_engine->disk_manager_, storage_engine->buffer_pool_manager_);
 
   log_recovery->Redo();
   log_recovery->Undo();
@@ -137,6 +136,8 @@ TEST(LogManagerTest, RedoTestWithOneTxn) {
                              storage_engine->log_manager_, first_page_id);
   EXPECT_EQ(test_table->GetTuple(rid, old_tuple, txn), 1);
   storage_engine->transaction_manager_->Commit(txn);
+
+  std::cout << "Old Tuple: " << old_tuple.ToString(schema) << "\n";
   delete txn;
   delete test_table;
 
@@ -146,6 +147,6 @@ TEST(LogManagerTest, RedoTestWithOneTxn) {
   LOG_DEBUG("Teared down the system");
   remove("test.db");
   remove("test.log");
-}*/
+}
 
 } // namespace cmudb

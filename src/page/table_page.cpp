@@ -16,6 +16,11 @@ void TablePage::Init(page_id_t page_id, size_t page_size,
   memcpy(GetData(), &page_id, 4); // set page_id
   if (ENABLE_LOGGING) {
     // TODO: add your logging logic here
+    LogRecord log(txn->GetTransactionId(), txn->GetPrevLSN(),
+      LogRecordType::NEWPAGE, prev_page_id);
+    lsn_t lsn = log_manager->AppendLogRecord(log);
+    txn->SetPrevLSN(lsn);
+    SetLSN(lsn);
   }
   SetPrevPageId(prev_page_id);
   SetNextPageId(INVALID_PAGE_ID);
@@ -50,7 +55,8 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID &rid, Transaction *txn,
                             LockManager *lock_manager,
                             LogManager *log_manager) {
   assert(tuple.size_ > 0);
-  if (GetFreeSpaceSize() < tuple.size_) {
+  int32_t freeSize = GetFreeSpaceSize();
+  if (freeSize < tuple.size_) {
     return false; // not enough space
   }
 
@@ -418,6 +424,8 @@ void TablePage::SetTupleCount(int32_t tuple_count) {
 
 // for free space calculation
 int32_t TablePage::GetFreeSpaceSize() {
-  return GetFreeSpacePointer() - 24 - GetTupleCount() * 8;
+  int32_t tupleCount = GetTupleCount();
+  int32_t freeSpacePtr = GetFreeSpacePointer();
+  return freeSpacePtr - 24 - tupleCount * 8;
 }
 } // namespace cmudb
