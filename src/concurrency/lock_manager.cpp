@@ -83,6 +83,9 @@ bool LockManager::LockExclusive(Transaction *txn, const RID &rid) {
     // abort if tx id ls younger than current one. Number bigger means younger
     txn_id_t curOwnerId = *req.granted_ids.begin();
     if (curOwnerId < txnId) {
+      LOG_INFO("LockExclusive for txn id %d, rid: %s aborted due to younger than current owner %d", 
+        txnId, rid.ToString().c_str(), curOwnerId);
+
       txn->SetState(TransactionState::ABORTED);
       return false;
     }
@@ -173,7 +176,7 @@ bool LockManager::Unlock(Transaction *txn, const RID &rid) {
   // If use strict 2PL, we only unlock if tx is completed.
   if (strict_2PL_) {
     if (txn->GetState() != TransactionState::ABORTED 
-      || txn->GetState() != TransactionState::COMMITTED) {
+      && txn->GetState() != TransactionState::COMMITTED) {
         return false;
       }
   }

@@ -34,19 +34,38 @@ bool LogRecovery::DeserializeLogRecord(const char *data,
 
   std::cout << "Logged:" << log_record.ToString().c_str() << std::endl; 
 
-  
-  if (log_record_type_ == LogRecordType::INSERT) {
-    log_record.insert_rid_ = *reinterpret_cast<const int *>(data + 20);
-
-    // | HEADER | tuple_rid | tuple_size | tuple_data
-    // We skip header, RID, then desrialize.
-    // First value is tuple size, then data
-    log_record.insert_tuple_.DeserializeFrom(data + 20 + sizeof(RID));
-  } else if (log_record_type_ == LogRecordType::NEWPAGE) {
-    log_record.prev_page_id_ = *reinterpret_cast<const page_id_t *>(
+  switch(log_record_type_) {
+    case LogRecordType::INSERT: {
+      log_record.insert_rid_ = *reinterpret_cast<const int *>(data + 20);
+      // | HEADER | tuple_rid | tuple_size | tuple_data
+      // We skip header, RID, then desrialize.
+      // First value is tuple size, then data
+      log_record.insert_tuple_.DeserializeFrom(data + 20 + sizeof(RID));
+      break;
+    }
+    case LogRecordType::MARKDELETE:
+    case LogRecordType::ROLLBACKDELETE:
+    case LogRecordType::APPLYDELETE:
+    {
+      log_record.delete_rid_ = *reinterpret_cast<const int *>(data + 20);
+      log_record.delete_tuple_.DeserializeFrom(data + 20 + sizeof(RID));
+      break;
+    }
+    case LogRecordType::UPDATE: {
+      log_record.update_rid_ = *reinterpret_cast<const int *>(data + 20);
+      log_record.old_tuple_.DeserializeFrom(data + 20 + sizeof(RID));
+      // header + RID + sizeof(int) + old tuple size 
+      log_record.new_tuple_.DeserializeFrom(data + 20 + sizeof(RID) + 4 + log_record.old_tuple_.GetLength());
+      break;
+    }
+    case LogRecordType::NEWPAGE: {
+      log_record.prev_page_id_ = *reinterpret_cast<const page_id_t *>(
         data + LogRecord::HEADER_SIZE);
+      break;
+    }
+    default:
+      break;
   }
-
   return true;
 }
 
@@ -59,14 +78,15 @@ bool LogRecovery::DeserializeLogRecord(const char *data,
  */
 void LogRecovery::Redo() {
   ENABLE_LOGGING = false;
+  offset_ = 0; // no check point
+
   std::cout << "Start log recovery redo process.." << std::endl;
-  while (disk_manager_->ReadLog(log_buffer_, PAGE_SIZE, 0)) { // false means log eof
+  while (disk_manager_->ReadLog(log_buffer_, LOG_BUFFER_SIZE, offset_)) { // false means log eof
     int buffer_offset = 0;
     LogRecord log_record;
     while (DeserializeLogRecord(log_buffer_ + buffer_offset, log_record)) {
-      
-      // redo the operation
-      // find table page
+      active_txn_[log_record.txn_id_] = log_record.lsn_;
+
       if (log_record.log_record_type_ == LogRecordType::INSERT) {
         RID rid = log_record.insert_rid_;
         auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
@@ -81,7 +101,6 @@ void LogRecovery::Redo() {
       } else if (log_record.GetLogRecordType() == LogRecordType::NEWPAGE) {
           page_id_t pre_page_id = log_record.prev_page_id_;
           TablePage *page;
-
           // the first page
           if (pre_page_id == INVALID_PAGE_ID) {
             page = reinterpret_cast<TablePage *>(
@@ -101,6 +120,10 @@ void LogRecovery::Redo() {
               auto *new_page = reinterpret_cast<TablePage *>(
                   buffer_pool_manager_->NewPage(new_page_id));
               assert(new_page != nullptr);
+              new_page->WLatch();
+              new_page->Init(new_page_id, PAGE_SIZE, pre_page_id, nullptr, nullptr);
+              new_page->WUnlatch();
+
               page->WLatch();
               page->SetNextPageId(new_page_id);
               page->WUnlatch();
@@ -109,10 +132,59 @@ void LogRecovery::Redo() {
             }
           }
           buffer_pool_manager_->UnpinPage(pre_page_id, true);
+      } else if (log_record.log_record_type_ == LogRecordType::MARKDELETE) {
+
+        RID rid = log_record.delete_rid_;
+        auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+        if (page->GetLSN() >= log_record.lsn_) {
+          continue;
         }
+        auto *tablePage = reinterpret_cast<TablePage *>(page);
+        auto result = tablePage->MarkDelete(log_record.delete_rid_, nullptr, nullptr, nullptr);
+        assert(result);
+        buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);
+      } else if (log_record.log_record_type_ == LogRecordType::ROLLBACKDELETE) {
 
+        RID rid = log_record.delete_rid_;
+        auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+        if (page->GetLSN() >= log_record.lsn_) {
+          continue;
+        }
+        auto *tablePage = reinterpret_cast<TablePage *>(page);
+        tablePage->RollbackDelete(log_record.delete_rid_, nullptr, nullptr);
+        buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);          
 
-      active_txn_[log_record.txn_id_] = log_record.lsn_;
+      } else if (log_record.log_record_type_ == LogRecordType::APPLYDELETE) {
+
+        RID rid = log_record.delete_rid_;
+        auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+        if (page->GetLSN() >= log_record.lsn_) {
+          continue;
+        }
+        auto *tablePage = reinterpret_cast<TablePage *>(page);
+        tablePage->ApplyDelete(log_record.delete_rid_, nullptr, nullptr);
+        buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);      
+
+      } else if (log_record.log_record_type_ == LogRecordType::UPDATE) {
+
+        RID rid = log_record.delete_rid_;
+        auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+        if (page->GetLSN() >= log_record.lsn_) {
+          continue;
+        }
+        auto *tablePage = reinterpret_cast<TablePage *>(page);
+        bool res = tablePage->UpdateTuple(log_record.new_tuple_, log_record.old_tuple_,
+          log_record.update_rid_, nullptr, nullptr, nullptr);
+        assert(res);
+        buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);            
+        
+      } 
+      // tx is completed/failed, remove from active txn map. No redo.
+      if (log_record.log_record_type_ == LogRecordType::COMMIT ||
+            log_record.log_record_type_ == LogRecordType::ABORT) {
+        active_txn_.erase(log_record.txn_id_);
+      }
+      
       lsn_mapping_[log_record.lsn_] = offset_ + buffer_offset;
 
       buffer_offset += log_record.size_;
@@ -121,12 +193,57 @@ void LogRecovery::Redo() {
     }
     //reset buffer
     offset_ += LOG_BUFFER_SIZE;
-
-    
-    break;
   }
 
   std::cout << "End log recovery redo process.." << std::endl;
+}
+
+void LogRecovery::UndoInternal(LogRecord &log_record) {
+  if (log_record.log_record_type_ == LogRecordType::INSERT) {
+    std::cout << "UndoInternal for insert" << std::endl;
+    RID rid = log_record.insert_rid_;
+    auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+    auto *tablePage = reinterpret_cast<TablePage *>(page);
+    tablePage->ApplyDelete(log_record.insert_rid_, nullptr, nullptr);
+    buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);
+  } else if (log_record.GetLogRecordType() == LogRecordType::NEWPAGE) {
+
+  
+  } else if (log_record.log_record_type_ == LogRecordType::MARKDELETE) {
+    std::cout << "UndoInternal for MARKDELETE" << std::endl;
+    RID rid = log_record.delete_rid_;
+    auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+    auto *tablePage = reinterpret_cast<TablePage *>(page);
+    tablePage->RollbackDelete(log_record.delete_rid_, nullptr, nullptr);
+    buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);
+
+  } else if (log_record.log_record_type_ == LogRecordType::ROLLBACKDELETE) {
+
+    RID rid = log_record.delete_rid_;
+    auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+    auto *tablePage = reinterpret_cast<TablePage *>(page);
+    tablePage->MarkDelete(log_record.delete_rid_, nullptr, nullptr, nullptr);
+    buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);          
+
+  } else if (log_record.log_record_type_ == LogRecordType::APPLYDELETE) {
+    std::cout << "UndoInternal for APPLYDELETE" << std::endl;
+    RID rid = log_record.delete_rid_;
+    auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+    auto *tablePage = reinterpret_cast<TablePage *>(page);
+    bool res =tablePage->InsertTuple(log_record.delete_tuple_, log_record.delete_rid_, nullptr, nullptr, nullptr);
+    assert(res);
+    buffer_pool_manager_->UnpinPage(rid.GetPageId(), true);      
+
+  } else if (log_record.log_record_type_ == LogRecordType::UPDATE) {
+    std::cout << "UndoInternal for UPDATE" << std::endl;
+    RID rid = log_record.delete_rid_;
+    auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
+    auto *tablePage = reinterpret_cast<TablePage *>(page);
+    bool res = tablePage->UpdateTuple(log_record.old_tuple_, log_record.new_tuple_,
+      log_record.update_rid_, nullptr, nullptr, nullptr);
+    assert(res);
+    buffer_pool_manager_->UnpinPage(rid.GetPageId(), true); 
+  } 
 }
 
 /*
@@ -134,9 +251,25 @@ void LogRecovery::Redo() {
  *iterate through active txn map and undo each operation
  */
 void LogRecovery::Undo() {
+  for (auto kv : active_txn_) {
+    //auto txnid = kv.first;
+    lsn_t lsn = kv.second;
+    int offset = lsn_mapping_[lsn];
 
-
-
+    LogRecord log_record;
+    bool res = DeserializeLogRecord(log_buffer_ + offset, log_record);
+    assert(res);
+    UndoInternal(log_record);
+    while (log_record.prev_lsn_ != INVALID_LSN) {
+      // find previous and redo
+      offset = lsn_mapping_[log_record.prev_lsn_];
+      bool res = DeserializeLogRecord(log_buffer_ + offset, log_record);
+      assert(res);
+      UndoInternal(log_record);
+    }
+  }
+  active_txn_.clear();
+  lsn_mapping_.clear();
 }
 
 } // namespace cmudb

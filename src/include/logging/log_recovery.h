@@ -45,6 +45,8 @@ private:
   // log buffer related
   int offset_;
   char *log_buffer_;
+
+  void UndoInternal(LogRecord &log_record);
 };
 
 } // namespace cmudb

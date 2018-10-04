@@ -92,7 +92,7 @@ void LogManager::StopFlushThread() {
 lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
   std::lock_guard<std::mutex> lock(latch_);
 
-  if (log_buf_offset_ + log_record.size_ > LOG_BUFFER_SIZE) {
+  if (log_buf_offset_ + log_record.size_ >= LOG_BUFFER_SIZE) {
     SwapBuffer();
     // wake up flush thread
     cv_.notify_one();
@@ -136,6 +136,7 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
   std::cout << log_record.ToString().c_str() << std::endl;
 
   std::cout << "Buffer offset is" << log_buf_offset_ << std::endl;
+  SetPersistentLSN(log_record.lsn_);
   return log_record.lsn_;
 }
 
