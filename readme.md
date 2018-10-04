@@ -28,10 +28,17 @@ $ make
 ```
 
 # Technical Brief
-### Virtual table
-contains A table heap and A index
+We will introduce the main virtual table, and its table pages, index.
+
+Key components includes buffer manager, lock manager, transaction manager, log manager, log recovery.
+
+## The Virtual table
+A [virtual table](https://www.sqlite.org/vtab.html) is an object that is registered with an open SQLite database connection. From the perspective of an SQL statement, the virtual table object looks like any other table or view. But behind the scenes, queries and updates on a virtual table invoke callback methods of the virtual table object instead of reading and writing on the database file.
+
+Our impl of VTable contains A table heap and An index. A virtual table is bascially a DB table, it contains the contents stored in disk, and an index used for search.
+
 ### table heap: 
-doubly-linked list of heap pages
+doubly-linked list of table pages in heap
 ### Index: 
 B+ tree index
 #### Page
@@ -72,18 +79,46 @@ Table page stores metadata and tuples in disk.
 #### RID
 Contains page id, slot num. Used by index Scan. Saved as B+ tree index value.
 
-#### B+ Tree
+## Buffer Pool Manager
+Functionality: The simplified Buffer Manager interface allows a client to
+new/delete pages on disk, to read a disk page into the buffer pool and pin
+it, also to unpin a page in the buffer pool.
+```
+Page *FetchPage(page_id_t page_id);
+bool UnpinPage(page_id_t page_id, bool is_dirty);
+bool FlushPage(page_id_t page_id);
+Page *NewPage(page_id_t &page_id);
+bool DeletePage(page_id_t page_id);
+```  
+
+### Extendible Hash
+extendible_hash.h : implementation of in-memory hash table using extendible
+hashing
+
+Functionality: The buffer pool manager must maintain a page table to be able
+to quickly map a PageId to its corresponding memory location; or alternately
+report that the PageId does not match any currently-buffered page.
+
+
+### LRU Replacer
+Functionality: The buffer pool manager must maintain a LRU list to collect
+all the pages that are unpinned and ready to be swapped. The simplest way to
+implement LRU is a FIFO queue, but remember to dequeue or enqueue pages when
+a page changes from unpinned to pinned, or vice-versa.
+
+
+## B+ Tree
 It is a balanced tree in which the internal pages direct the search and leaf pages contains actual data entries. The tree structure grows and shrink dynamically, supports split and merge.
 
 Has internal page, leaf page, and index iterator.
 
-### Transaction Manager
+## Transaction Manager
 1. Begin:starts a new txn.
 2. Commit:Commits a txn. Release all locks.
 3. Abort: Abort a txn. Undo all operations, release all locks.
 Uses Lock Manager, and Log Manager.
 
-#### Transaction
+### Transaction
 ```
  * Transaction states:
  *
@@ -95,23 +130,23 @@ Uses Lock Manager, and Log Manager.
 ```
 Has shared lock set, and exclusive lock set for table pages.
 
-### Lock Manager
+## Lock Manager
 Tuple level lock manager, use wait-die to prevent deadlocks
 
-### Disk Manager
+## Disk Manager
 Disk manager takes care of the allocation and deallocation of pages within a
 database. It also performs read and write of pages to and from disk, and
 provides a logical file layer within the context of a database management
 system.
 
-### Log Manager
+## Log Manager
 Maintain a separate thread that is awaken when the log buffer is
 full or time out(every X second) to write log buffer's content into disk log
 file. 
 
 To achieve the goal of atomicity and durability, the database system must output to stable storage information describing the modifications made by any transaction, this information can help us ensure that all modifications performed by committed transactions are reflected in the database (perhaps during the course of recovery actions after a crash). It can also help us ensure that no modifications made by an aborted or crashed transaction persist in the database. The most widely used structure for recording database modifications is the log. The log is a sequence of log records, recording all the update activities in the database. 
 
-#### Log Record
+### Log Record
 ```
  * log_record.h
  * For every write opeartion on table page, you should write ahead a
@@ -154,7 +189,7 @@ LogRecordType
 ``` 
 Log record is the basic unit got written in log file. Used for system recovery.
 
-#### Log recovery
+## Log recovery
 Ability for the DBMS to recover its state from the log file
 Supports Redo, undo.
 APIs:
@@ -169,11 +204,11 @@ std::unordered_map<txn_id_t, lsn_t> active_txn_;
 std::unordered_map<lsn_t, int> lsn_mapping_;
 ```
 Internally keeps a log buffer, read from log file until EOF.
-##### In Redo phase:
+#### In Redo phase:
 1. Deserialize every log record, save txn's latest log No. in active txn map, and lsn_mapping
 2. If txn committed/aborted, remove it from map.
 3. After redo, active_txn_ map contains all non committed/aborted txns. Used for undo stages.
-##### In Undo Phase:
+#### In Undo Phase:
 1. For each txn in active txn map, undo the operation
 2. Find the operation's previous operation, undo it. (Found prev use previous LSN from log record.)
 3. Loop all txns.
