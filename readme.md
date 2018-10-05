@@ -7,7 +7,7 @@ Using SQLite's Virtual Table interface, allows you use your storage manager in S
 ## Table of Contents
 - [Features](#features)
   - [Buffer Pool Manager](#buffer-pool-manager)
-  - [B+ Tree Index](#b+-tree-index)
+  - [B+ Tree Index](#b-plus-tree-index)
   - [Concurrency Control for Transactions](#concurrency-control-for-transactions)
   - [Logging and Recovery System](#logging-and-recovery-system)
 - [How to Build](#how-to-build)
@@ -16,7 +16,7 @@ Using SQLite's Virtual Table interface, allows you use your storage manager in S
   - [Buffer Pool Manager](#buffer-pool-manager)
     - [Extendible Hash](#extendible-hash)
     - [LRU Replacer](#lru-replacer)
-  - [B+ Tree](#b+-tree)
+  - [B+ Tree](#b-plus-tree)
   - [Transaction Manager](#transaction-manager)
   - [Lock Manager](#lock-manager)
   - [Disk Manager](#disk-manager)
@@ -29,7 +29,7 @@ Using SQLite's Virtual Table interface, allows you use your storage manager in S
 ### Buffer Pool Manager
 The buffer pool is responsible for moving physical pages back and forth from main memory to disk. It allows a DBMS to support databases that are larger than the amount of memory that is available to the system. Its operations are transparent to other parts in the system. For example, the system asks the buffer pool for a page using its unique identifier (page_id) and it does not know whether that page is already in memory or whether the system has to go retrieve it from disk.
 
-### B+ Tree Index
+### B Plus Tree Index
 Implement an B+ Tree index in the database system. The index is responsible for fast data retrieval without having to search through every row in a database table, providing the basis for both rapid random lookups and efficient access of ordered records.
 
 ### Concurrency Control for Transactions
@@ -128,7 +128,7 @@ implement LRU is a FIFO queue, but remember to dequeue or enqueue pages when
 a page changes from unpinned to pinned, or vice-versa.
 
 
-## B+ Tree
+## B Plus Tree
 It is a balanced tree in which the internal pages direct the search and leaf pages contains actual data entries. The tree structure grows and shrink dynamically, supports split and merge.
 
 Has internal page, leaf page, and index iterator.
