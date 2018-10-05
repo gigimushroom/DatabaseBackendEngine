@@ -4,6 +4,27 @@ Such a storage manager assumes that the primary storage location of the database
 
 Using SQLite's Virtual Table interface, allows you use your storage manager in SQLite without changing application-level code.
 
+## Table of Contents
+- [Features](#Features)
+  - [Buffer Pool Manager](#Buffer-Pool-Manager)
+  - [B+ Tree Index](#B+-Tree-Index)
+  - [Concurrency Control for Transactions](#Concurrency-Control-for-Transactions)
+  - [Logging and Recovery System](#Logging-and-Recovery-System)
+- [How to Build](#How-to-Build)
+- [Technical Brief](#Technical-Brief)
+  - [The Virtual table](#The-Virtual-table)
+  - [Buffer Pool Manager](#Buffer-Pool-Manager)
+    - [Extendible Hash](#Extendible-Hash)
+    - [LRU Replacer](#LRU-Replacer)
+  - [B+ Tree](#B+-Tree)
+  - [Transaction Manager](#Transaction-Manager)
+  - [Lock Manager](#Lock-Manager)
+  - [Disk Manager](#Disk-Manager)
+  - [Log Manager](#Log-Manager)
+  - [Log recovery](#Log-recovery)
+- [Resources](#Other-Tech-used-in-System)
+
+
 # Features
 ### Buffer Pool Manager
 The buffer pool is responsible for moving physical pages back and forth from main memory to disk. It allows a DBMS to support databases that are larger than the amount of memory that is available to the system. Its operations are transparent to other parts in the system. For example, the system asks the buffer pool for a page using its unique identifier (page_id) and it does not know whether that page is already in memory or whether the system has to go retrieve it from disk.
