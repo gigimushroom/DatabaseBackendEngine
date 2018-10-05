@@ -5,8 +5,8 @@ Such a storage manager assumes that the primary storage location of the database
 Using SQLite's Virtual Table interface, allows you use your storage manager in SQLite without changing application-level code.
 
 ## Table of Contents
-- [Features](#Features)
-  - [Buffer Pool Manager](#Buffer-Pool-Manager)
+- [Features](#features)
+  - [Buffer Pool Manager](#buffer-pool-manager)
   - [B+ Tree Index](#B+-Tree-Index)
   - [Concurrency Control for Transactions](#Concurrency-Control-for-Transactions)
   - [Logging and Recovery System](#Logging-and-Recovery-System)
@@ -21,7 +21,7 @@ Using SQLite's Virtual Table interface, allows you use your storage manager in S
   - [Lock Manager](#Lock-Manager)
   - [Disk Manager](#Disk-Manager)
   - [Log Manager](#Log-Manager)
-  - [Log recovery](#Log-recovery)
+  - [Log recovery](#log-recovery)
 - [Resources](#Other-Tech-used-in-System)
 
 
