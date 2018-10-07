@@ -281,5 +281,6 @@ The Wound-Wait algorithm preempts the younger process.
         it has to wait for older process to finish. 
 This is the better of the two algorithms.   
 ``` 
+Table page deletes tuple data using shift data to cover the "deleted" one. Used memmove syscall.
 
 [How does a relational database work ?](http://coding-geek.com/how-databases-work/)
